@@ -9,23 +9,23 @@ class Address(Base):
     __tablename__ = 'address'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    household_id = Column(Integer, ForeignKey('household.id'))
+    family_id = Column(Integer, ForeignKey('family.id'))
     line_1 = Column(String)
     line_2 = Column(String)
     city = Column(String)
     state = Column(String)
-    postal_code = Column(String)
+    zip = Column(String)
     country = Column(String, default="United States")
     is_current = Column(Integer, default=1)
     is_likely_to_change = Column(Integer, default=0)
 
     def __repr__(self):
-        return f"Address(id={self.id}, hh={self.household_id}, city={self.city}, " \
+        return f"Address(id={self.id}, fam={self.family_id}, city={self.city}, " \
                f"state={self.state}, is_current={self.is_current}"
 
 
-class Household(Base):
-    __tablename__ = "household"
+class Family(Base):
+    __tablename__ = "family"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
@@ -34,7 +34,7 @@ class Household(Base):
     primary_address_id = Column(Integer)
 
     def __repr__(self):
-        return f"Household(id={self.id}, name={self.name}, primary_address={self.primary_address_id}"
+        return f"Family(id={self.id}, name={self.name}, primary_address={self.primary_address_id}"
 
 
 class Event(Base):
@@ -56,12 +56,12 @@ class Gift(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     event_id = Column(Integer, ForeignKey('event.id'))
-    household_id = Column(Integer, ForeignKey('household.id'))
+    family_id = Column(Integer, ForeignKey('family.id'))
     description = Column(String)
     notes = Column(String)
 
     def __repr__(self):
-        return f"Gift(id={self.id}, event={self.event_id}, hh={self.household_id}, " \
+        return f"Gift(id={self.id}, event={self.event_id}, fam={self.family_id}, " \
                f"description={self.description}, notes={self.notes}"
 
 
@@ -72,9 +72,9 @@ class Card(Base):
     was_card_sent = Column(Integer, default=0)
     event_id = Column(Integer, ForeignKey('event.id'))
     gift_id = Column(Integer, ForeignKey('gift.id'))
-    household_id = Column(Integer, ForeignKey('household.id'))
+    family_id = Column(Integer, ForeignKey('family.id'))
     address_id = Column(Integer, ForeignKey('address.id'))
 
     def __repr__(self):
         return f"Card(id={self.id}, was_card_sent={self.was_card_sent}, event={self.event_id}, " \
-               f"gift={self.gift_id}, hh={self.household_id}, address={self.address_id}"
+               f"gift={self.gift_id}, fam={self.family_id}, address={self.address_id}"
