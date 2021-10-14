@@ -28,13 +28,16 @@ class Family(Base):
     __tablename__ = "family"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String)
+    nickname = Column(String)
+    surname = Column(String)
     formal_name = Column(String)
     relationship = Column(String)
+    relationship_type = Column(String)
     primary_address_id = Column(Integer)
 
     def __repr__(self):
-        return f"Family(id={self.id}, name={self.name}, primary_address={self.primary_address_id}"
+        return f"Family(id={self.id}, nick={self.nickname}, surname={self.surname}, " \
+               f"rel={self.relationship}, primary_address={self.primary_address_id}"
 
 
 class Event(Base):
