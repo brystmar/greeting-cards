@@ -3,7 +3,7 @@ from logging import getLogger
 from backend.config import Config
 from flask import Flask
 
-logger = getLogger(__name__)
+logger = getLogger()
 
 
 def create_app(config_class=Config) -> Flask:

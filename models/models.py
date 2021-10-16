@@ -1,7 +1,9 @@
+from logging import getLogger
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime
 
+logger = getLogger()
 Base = declarative_base()
 
 

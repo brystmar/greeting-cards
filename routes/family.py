@@ -6,7 +6,7 @@ from flask_restful import Resource
 from sqlalchemy import select, exc
 import json
 
-logger = getLogger(__name__)
+logger = getLogger()
 
 
 class FamilyApi(Resource):

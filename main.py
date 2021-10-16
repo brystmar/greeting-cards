@@ -1,10 +1,9 @@
 """Defines our app using the create_app function in backend/__init__.py"""
-# System basics
+# Built-in modules
 from os import mkdir, path
 import logging
 
-# Packages
-from flask import redirect, request
+# Other packages
 from flask_restful import Api
 
 # App components
@@ -19,15 +18,15 @@ from routes.family import FamilyApi
 if not path.exists(Config.LOGGING_DIRECTORY):
     mkdir(Config.LOGGING_DIRECTORY)
 
-# Set config parameters and initialize the logger
+# Set config parameters for our logger
 logging.basicConfig(filename=f"{Config.LOGGING_DIRECTORY}/greeting-cards.log",
                     level=logging.DEBUG,
                     datefmt="%Y-%m-%d %H:%M:%S",
                     filemode="w",
                     format="%(asctime)s | %(name)s | %(levelname)s | %(message)s")
 
-# Get the logger we just created
-logger = logging.getLogger(__name__)
+# Initialize the root logger
+logger = logging.getLogger()
 logger.info(f"Initialized global logging at level: {logger.getEffectiveLevel()}")
 
 
