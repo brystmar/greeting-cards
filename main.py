@@ -1,11 +1,20 @@
 """Defines our app using the create_app function in backend/__init__.py"""
+# System basics
 from os import mkdir, path
-from backend import create_app
-from backend.config import Config
 import logging
 
+# Packages
+from flask import redirect, request
+from flask_restful import Api
 
-# =*=* Initialize logging =*=*
+# App components
+from backend import create_app
+from backend.config import Config
+from routes.address import AddressApi
+from routes.family import FamilyApi
+
+
+# Initialize logging
 # Create the logging directory, if necessary
 if not path.exists(Config.LOGGING_DIRECTORY):
     mkdir(Config.LOGGING_DIRECTORY)
@@ -19,15 +28,23 @@ logging.basicConfig(filename=f"{Config.LOGGING_DIRECTORY}/greeting-cards.log",
 
 # Get the logger we just created
 logger = logging.getLogger(__name__)
-logger.info(f"Global logging initialized!  Level: {logger.getEffectiveLevel()}")
+logger.info(f"Initialized global logging at level: {logger.getEffectiveLevel()}")
 
 
-# =*=* Initialize the Flask app =*=*
+# Initialize the Flask app
 app = create_app()
 
-# Create a global variable to indicate whether this app is running on the local machine
-basedir = path.abspath(path.dirname(__file__))
-is_running_locally = "pycharm" in basedir.lower()
+# Initialize the api for our app
+api = Api(app)
+logger.info("Initialized the API for this Flask app")
+
+# Define the functional endpoints
+api.add_resource(AddressApi, '/api/v1/address')
+api.add_resource(FamilyApi, '/api/v1/family')
+
+
+# Define a global variable to indicate whether this app is running on the local machine
+is_running_locally = "pycharm" in path.abspath(path.dirname(__file__)).lower()
 
 if is_running_locally:
     logger.info("App is running locally.")

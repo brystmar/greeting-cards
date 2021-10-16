@@ -1,7 +1,6 @@
 """Defines the object to configure parameters for our Flask app."""
 from logging import getLogger
-from os import environ
-from main import is_running_locally
+from os import environ, path
 
 logger = getLogger(__name__)
 
@@ -11,13 +10,11 @@ class Config(object):
 
     # If the app is running locally, our environment variables can be applied directly
     # from the local .env file
-    if is_running_locally:
-        logger.debug("App is running locally.  Applying variables from local .env file.")
+    if "pycharm" in path.abspath(path.dirname(__file__)).lower():
+        logger.debug("Applying variables from local .env file")
         from env_tools import apply_env
         apply_env()
         logger.debug("Local .env variables applied")
-    else:
-        logger.debug("App is NOT running locally.")
 
     # App-related variables
     BOUND_PORT = 5000
