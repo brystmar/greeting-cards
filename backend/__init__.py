@@ -10,7 +10,7 @@ def create_app(config_class=Config) -> Flask:
     logger.debug("Start of create_app()")
 
     # Create the Flask app
-    app = Flask(__name__)
+    app = Flask(Config.APP_NAME)
     logger.debug(f"Initialized the Flask app: {app.name}.")
 
     # Apply the config parameters to this app

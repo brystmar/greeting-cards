@@ -1,34 +1,15 @@
 """Defines our app using the create_app function in backend/__init__.py"""
 # Built-in modules
-from os import mkdir, path
-import logging
+from os import path
 
-# Other packages
+# Third-party packages
 from flask_restful import Api
 
 # App components
+from global_logger import logger
 from backend import create_app
-from backend.config import Config
 from routes.address import AddressApi
 from routes.family import FamilyApi
-
-
-# Initialize logging
-# Create the logging directory, if necessary
-if not path.exists(Config.LOGGING_DIRECTORY):
-    mkdir(Config.LOGGING_DIRECTORY)
-
-# Set config parameters for our logger
-logging.basicConfig(filename=f"{Config.LOGGING_DIRECTORY}/greeting-cards.log",
-                    level=logging.DEBUG,
-                    datefmt="%Y-%m-%d %H:%M:%S",
-                    filemode="w",
-                    format="%(asctime)s | %(name)s | %(levelname)s | %(message)s")
-
-# Initialize the root logger
-logger = logging.getLogger()
-logger.info(f"Initialized global logging at level: {logger.getEffectiveLevel()}")
-
 
 # Initialize the Flask app
 app = create_app()
@@ -51,6 +32,8 @@ else:
     logger.info("App is NOT running locally.")
 
 if __name__ == "__main__" and is_running_locally:
+    from backend.config import Config
+
     app.run(host="localhost", port=Config.BOUND_PORT, debug=True)
     logger.info(f"Running locally via __main__: http://localhost:{Config.BOUND_PORT}")
     print(f"Running locally via __main__: http://localhost:{Config.BOUND_PORT}")
