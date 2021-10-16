@@ -22,6 +22,7 @@ class Config(object):
     # App-related variables
     BOUND_PORT = 5000
     SECRET_KEY = environ.get('SECRET_KEY') or 'wyKx4azY2YQ?R4J257fi@LkNVCBmkZgR1gwFWs!whsQ2V3YB'
+    LOGGING_DIRECTORY = "./logs"
 
     # Log a warning if the fallback secret key was used
     if SECRET_KEY != environ.get('SECRET_KEY'):
