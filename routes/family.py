@@ -3,7 +3,7 @@ from logging import getLogger
 from models.models import Family
 from flask import request
 from flask_restful import Resource
-from sqlalchemy import select, exc
+from backend import db
 import json
 
 logger = getLogger()
@@ -18,10 +18,12 @@ class FamilyApi(Resource):
 
         try:
             # Retrieve all families from the db, sorted by id
-            families = select(Family).order_by(Family.id)
+            families = db.select(Family).order_by(Family.id)
+            logger.debug(f"Query results for families: {families}")
 
             logger.debug("End of FamilyAPI.GET")
             return families
 
-        except exc.SQLAlchemyError as e:
+        # except exc.SQLAlchemyError as e:
+        except BaseException as e:
             logger.debug(f"Error retrieving data: {e}")

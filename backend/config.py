@@ -19,8 +19,14 @@ class Config(object):
     # App-related variables
     APP_NAME = "greeting-cards"
     BOUND_PORT = 5000
-    SQLITE_FILE_NAME = environ.get("SQLITE_FILE_NAME")
     SECRET_KEY = environ.get("SECRET_KEY") or "wyKx4azY2YQ?R4J257fi@LkNVCBmkZgR1gwFWs!whsQ2V3YB"
+
+    # Database
+    SQLALCHEMY_DATABASE_URI = environ.get("SQLALCHEMY_DATABASE_URI")
+    logger.debug(f"SQLAlchemy db URI: {SQLALCHEMY_DATABASE_URI}")
+
+    # Should SQLAlchemy send a notification to the app every time an object changes?
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Log a warning if the fallback secret key was used
     if SECRET_KEY != environ.get("SECRET_KEY"):
