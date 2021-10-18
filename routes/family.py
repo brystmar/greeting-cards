@@ -6,6 +6,7 @@ from models.models import Family
 from flask import request
 from flask_restful import Resource
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
+from helpers.api_data_validation import integer_validation
 import json
 
 logger = getLogger()
@@ -50,10 +51,9 @@ class FamilyApi(Resource):
         logger.debug(request)
 
         # Validate that the provided family_id can be converted to an integer
-        if not int(family_id):
-            logger.debug(f"Type: {type(family_id)}")
-            logger.debug("Provided family_id is not an integer")
-            logger.debug("End of FamilyAPI.GET")
+        # TODO: Fix this implementation
+        val = integer_validation(family_id, field_name="family_id", api_name="FamilyAPI.GET")
+        if not val:
             return f"Value for family_id must be an integer.", 400
 
         try:
@@ -75,3 +75,92 @@ class FamilyApi(Resource):
             logger.debug(f"{error_msg}\n{e}")
             logger.debug(f"End of FamilyAPI.GET")
             return error_msg, 404
+
+    def post(self) -> json:
+        """Add a new family to the database"""
+        logger.debug(f"Start of FamilyAPI.POST")
+        logger.debug(request)
+
+        # Ensure data was included in the request body
+        if not request.data:
+            logger.debug("No data found in request body.")
+            logger.debug("End of FamilyAPI.POST")
+            return "POST request must contain a body.", 400
+
+        # Parse the request body
+        try:
+            data = json.loads(request.data.decode())
+            logger.debug(f"Data provided: {data}")
+
+        except json.JSONDecodeError as e:
+            error_msg = "Error attempting to decode the provided JSON."
+            logger.debug(f"{error_msg},\n{request.data.__str__()},\n{e}")
+            return error_msg + f"\n{request.data.__str__()}", 400
+
+        except BaseException as e:
+            error_msg = "Unknown error attempting to decode JSON."
+            logger.debug(f"{error_msg}\n{e}")
+            return error_msg, 400
+
+        # Create a new Family from the provided data
+        try:
+            new_family = Family(**data)
+            new_family.date_created = datetime.utcnow()
+            new_family.last_modified = new_family.date_created
+
+            # Commit this new record so the db generates an id
+            db.session.commit()
+
+            logger.debug("End of FamilyAPI.POST")
+            return new_family.id, 200
+
+        except SQLAlchemyError as e:
+            error_msg = "Unable to create new Family record."
+            logger.debug(f"{error_msg}\n{e}")
+            logger.debug("End of FamilyAPI.POST")
+            return f"{error_msg}\n{e}", 500
+
+    def put(self, family_id) -> json:
+        """Update an existing record"""
+        logger.debug(f"Start of FamilyAPI.PUT")
+        logger.debug(request)
+
+        # TODO: Generalize this section & finish the PUT method
+        # Ensure data was included in the request body
+        if not request.data:
+            logger.debug("No data found in request body.")
+            logger.debug("End of FamilyAPI.PUT")
+            return "PUT request must contain a body.", 400
+
+        # Parse the request body
+        try:
+            data = json.loads(request.data.decode())
+            logger.debug(f"Data provided: {data}")
+
+        except json.JSONDecodeError as e:
+            error_msg = "Error attempting to decode the provided JSON."
+            logger.debug(f"{error_msg},\n{request.data.__str__()},\n{e}")
+            return error_msg + f"\n{request.data.__str__()}", 400
+
+        except BaseException as e:
+            error_msg = "Unknown error attempting to decode JSON."
+            logger.debug(f"{error_msg}\n{e}")
+            return error_msg, 400
+
+        # Retrieve the family record to modify
+        try:
+            new_family = Family(**data)
+            new_family.date_created = datetime.utcnow()
+            new_family.last_modified = new_family.date_created
+
+            # Commit this new record so the db generates an id
+            db.session.commit()
+
+            logger.debug("End of FamilyAPI.PUT")
+            return new_family.id, 200
+
+        except SQLAlchemyError as e:
+            error_msg = "Unable to update Family record."
+            logger.debug(f"{error_msg}\n{e}")
+            logger.debug("End of FamilyAPI.PUT")
+            return f"{error_msg}\n{e}", 500
