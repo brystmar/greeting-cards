@@ -4,11 +4,11 @@ from logging import getLogger
 logger = getLogger()
 
 
-def integer_validation(data, field_name="field", api_name="api"):
-    if not int(data):
-        logger.debug(f"Type: {type(data)}")
-        logger.debug(f"Provided {field_name} is not an integer")
+def ensure_request_contains_data(data, api_name="api"):
+    if data:
+        return True
+    else:
+        logger.debug("No data found in request body.")
         logger.debug(f"End of {api_name}")
         return False
-    else:
-        return True
+

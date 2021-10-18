@@ -6,7 +6,7 @@ from models.models import Family
 from flask import request
 from flask_restful import Resource
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
-from helpers.api_data_validation import integer_validation
+from helpers.api_data_validation import ensure_request_contains_data
 import json
 
 logger = getLogger()
@@ -51,11 +51,15 @@ class FamilyApi(Resource):
         logger.debug(request)
 
         # Validate that the provided family_id can be converted to an integer
-        # TODO: Fix this implementation
-        val = integer_validation(family_id, field_name="family_id", api_name="FamilyAPI.GET")
-        if not val:
-            return f"Value for family_id must be an integer.", 400
+        try:
+            logger.debug(f"Provided family_id={int(family_id)} is convertible to an integer.")
+        except TypeError as e:
+            logger.debug(f"Provided family_id is type {type(family_id)} and cannot be "
+                         f"converted to an integer.")
+            logger.debug(f"End of FamilyAPI.GET")
+            return f"Value for family_id must be an integer. {e}", 400
 
+        # Retrieve the selected record
         try:
             family = Family.query.get(family_id)
 
@@ -71,8 +75,8 @@ class FamilyApi(Resource):
                 return f"No records found for family_id={family_id}.", 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No records found for family_id={family_id}."
-            logger.debug(f"{error_msg}\n{e}")
+            error_msg = f"No records found for family_id={family_id}.\n{e}"
+            logger.debug(error_msg)
             logger.debug(f"End of FamilyAPI.GET")
             return error_msg, 404
 
@@ -82,9 +86,7 @@ class FamilyApi(Resource):
         logger.debug(request)
 
         # Ensure data was included in the request body
-        if not request.data:
-            logger.debug("No data found in request body.")
-            logger.debug("End of FamilyAPI.POST")
+        if not ensure_request_contains_data(data=request.data, api_name="FamilyAPI.POST"):
             return "POST request must contain a body.", 400
 
         # Parse the request body
@@ -93,44 +95,55 @@ class FamilyApi(Resource):
             logger.debug(f"Data provided: {data}")
 
         except json.JSONDecodeError as e:
-            error_msg = "Error attempting to decode the provided JSON."
-            logger.debug(f"{error_msg},\n{request.data.__str__()},\n{e}")
-            return error_msg + f"\n{request.data.__str__()}", 400
-
-        except BaseException as e:
-            error_msg = "Unknown error attempting to decode JSON."
-            logger.debug(f"{error_msg}\n{e}")
+            error_msg = f"Error attempting to decode the provided JSON.\n" \
+                        f"{request.data.__str__()},\n{e}"
+            logger.debug(error_msg)
             return error_msg, 400
 
-        # Create a new Family from the provided data
+        except BaseException as e:
+            error_msg = f"Unknown error attempting to decode JSON.\n{e}"
+            logger.debug(error_msg)
+            return error_msg, 400
+
+        # Create a new Family record using the provided data
         try:
+            logger.debug("Attempting to create a new Family record from provided data.")
             new_family = Family(**data)
             new_family.date_created = datetime.utcnow()
             new_family.last_modified = new_family.date_created
+            logger.debug(f"New record successfully created: {new_family.to_dict()}")
 
             # Commit this new record so the db generates an id
+            logger.debug("Attempting to commit data")
             db.session.commit()
+            logger.debug("Commit completed")
 
             logger.debug("End of FamilyAPI.POST")
             return new_family.id, 200
 
         except SQLAlchemyError as e:
-            error_msg = "Unable to create new Family record."
-            logger.debug(f"{error_msg}\n{e}")
+            error_msg = f"Unable to create new Family record.\n{e}"
+            logger.debug(error_msg)
             logger.debug("End of FamilyAPI.POST")
-            return f"{error_msg}\n{e}", 500
+            return error_msg, 500
 
     def put(self, family_id) -> json:
         """Update an existing record"""
         logger.debug(f"Start of FamilyAPI.PUT")
         logger.debug(request)
 
-        # TODO: Generalize this section & finish the PUT method
         # Ensure data was included in the request body
-        if not request.data:
-            logger.debug("No data found in request body.")
-            logger.debug("End of FamilyAPI.PUT")
+        if not ensure_request_contains_data(data=request.data, api_name="FamilyAPI.PUT"):
             return "PUT request must contain a body.", 400
+
+        # Validate that the provided family_id can be converted to an integer
+        try:
+            logger.debug(f"Provided family_id={int(family_id)} is convertible to an integer.")
+        except TypeError as e:
+            logger.debug(f"Provided family_id is type {type(family_id)} and cannot be "
+                         f"converted to an integer.")
+            logger.debug(f"End of FamilyAPI.PUT")
+            return f"Value for family_id must be an integer. {e}", 400
 
         # Parse the request body
         try:
@@ -138,29 +151,35 @@ class FamilyApi(Resource):
             logger.debug(f"Data provided: {data}")
 
         except json.JSONDecodeError as e:
-            error_msg = "Error attempting to decode the provided JSON."
-            logger.debug(f"{error_msg},\n{request.data.__str__()},\n{e}")
-            return error_msg + f"\n{request.data.__str__()}", 400
-
-        except BaseException as e:
-            error_msg = "Unknown error attempting to decode JSON."
-            logger.debug(f"{error_msg}\n{e}")
+            error_msg = f"Error attempting to decode the provided JSON.\n" \
+                        f"{request.data.__str__()},\n{e}"
+            logger.debug(error_msg)
             return error_msg, 400
 
-        # Retrieve the family record to modify
-        try:
-            new_family = Family(**data)
-            new_family.date_created = datetime.utcnow()
-            new_family.last_modified = new_family.date_created
+        except BaseException as e:
+            error_msg = f"Unknown error attempting to decode JSON.\n{e}"
+            logger.debug(error_msg)
+            return error_msg, 400
 
-            # Commit this new record so the db generates an id
+        # Retrieve the specified family record
+        try:
+            family = Family.query.get(family_id)
+            family.nickname = data.nickname
+            family.surname = data.surname
+            family.formal_name = data.formal_name
+            family.relationship = data.relationship
+            family.relationship_type = data.relationship_type
+
+            # Commit these changes to the db
+            logger.debug("Attempting to commit db changes")
             db.session.commit()
+            logger.debug("Changes saved to the database")
 
             logger.debug("End of FamilyAPI.PUT")
-            return new_family.id, 200
+            return family.id, 200
 
         except SQLAlchemyError as e:
-            error_msg = "Unable to update Family record."
-            logger.debug(f"{error_msg}\n{e}")
+            error_msg = f"Unable to update Family record.\n{e}"
+            logger.debug(error_msg)
             logger.debug("End of FamilyAPI.PUT")
-            return f"{error_msg}\n{e}", 500
+            return error_msg, 500
