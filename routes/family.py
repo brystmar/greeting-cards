@@ -1,6 +1,6 @@
 """Defines the family-related endpoints."""
-from datetime import datetime
 from logging import getLogger
+from datetime import datetime
 from backend import db
 from models.models import Family
 from flask import request
@@ -44,21 +44,25 @@ class FamilyCollectionApi(Resource):
 
 
 class FamilyApi(Resource):
-    """Endpoint: /api/v1/family/<family_id>"""
+    """
+    Endpoints:
+        POST                /api/v1/family/
+        GET, PUT, DELETE    /api/v1/family/<address_id>
+    """
 
     def get(self, family_id) -> json:
         """Return data for the specified family"""
         logger.debug(f"Start of FamilyAPI.GET for family={family_id}")
         logger.debug(request)
 
-        # Validate that the provided family_id can be converted to an integer
+        # Validate that the provided address_id can be converted to an integer
         try:
-            logger.debug(f"Provided family_id={int(family_id)} is convertible to an integer.")
+            logger.debug(f"Provided address_id={int(family_id)} is convertible to an integer.")
         except TypeError as e:
-            logger.debug(f"Provided family_id is type {type(family_id)} and cannot be "
+            logger.debug(f"Provided address_id is type {type(family_id)} and cannot be "
                          f"converted to an integer.")
             logger.debug(f"End of FamilyAPI.GET")
-            return f"Value for family_id must be an integer. {e}", 400
+            return f"Value for address_id must be an integer. {e}", 400
 
         # Retrieve the selected record
         try:
@@ -71,12 +75,12 @@ class FamilyApi(Resource):
                 return family.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No records found for family_id={family_id}.")
+                logger.debug(f"No records found for address_id={family_id}.")
                 logger.debug("End of FamilyAPI.GET")
-                return f"No records found for family_id={family_id}.", 404
+                return f"No records found for address_id={family_id}.", 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No records found for family_id={family_id}.\n{e}"
+            error_msg = f"No records found for address_id={family_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of FamilyAPI.GET")
             return error_msg, 404
@@ -110,8 +114,6 @@ class FamilyApi(Resource):
         try:
             logger.debug("Attempting to create a new Family record from provided data.")
             new_family = Family(**data)
-            new_family.date_created = datetime.utcnow()
-            new_family.last_modified = new_family.date_created
             logger.debug(f"New record successfully created: {new_family.to_dict()}")
 
             # Commit this new record so the db generates an id
@@ -120,7 +122,7 @@ class FamilyApi(Resource):
             logger.debug("Commit completed")
 
             logger.debug("End of FamilyAPI.POST")
-            return new_family.id, 200
+            return new_family.id, 201
 
         except SQLAlchemyError as e:
             error_msg = f"Unable to create new Family record.\n{e}"
@@ -137,14 +139,14 @@ class FamilyApi(Resource):
         if not ensure_request_contains_data(data=request.data, api_name="FamilyAPI.PUT"):
             return "PUT request must contain a body.", 400
 
-        # Validate that the provided family_id can be converted to an integer
+        # Validate that the provided address_id can be converted to an integer
         try:
-            logger.debug(f"Provided family_id={int(family_id)} is convertible to an integer.")
+            logger.debug(f"Provided address_id={int(family_id)} is convertible to an integer.")
         except TypeError as e:
-            logger.debug(f"Provided family_id is type {type(family_id)} and cannot be "
+            logger.debug(f"Provided address_id is type {type(family_id)} and cannot be "
                          f"converted to an integer.")
             logger.debug(f"End of FamilyAPI.PUT")
-            return f"Value for family_id must be an integer. {e}", 400
+            return f"Value for address_id must be an integer. {e}", 400
 
         # Parse the request body
         try:
@@ -190,14 +192,14 @@ class FamilyApi(Resource):
         logger.debug(f"Start of FamilyAPI.DELETE for family={family_id}")
         logger.debug(request)
 
-        # Validate that the provided family_id can be converted to an integer
+        # Validate that the provided address_id can be converted to an integer
         try:
-            logger.debug(f"Provided family_id={int(family_id)} is convertible to an integer.")
+            logger.debug(f"Provided address_id={int(family_id)} is convertible to an integer.")
         except TypeError as e:
-            logger.debug(f"Provided family_id is type {type(family_id)} and cannot be "
+            logger.debug(f"Provided address_id is type {type(family_id)} and cannot be "
                          f"converted to an integer.")
             logger.debug(f"End of FamilyAPI.GET")
-            return f"Value for family_id must be an integer. {e}", 400
+            return f"Value for address_id must be an integer. {e}", 400
 
         # Retrieve the selected record
         try:
@@ -216,12 +218,12 @@ class FamilyApi(Resource):
                 return family.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No records found for family_id={family_id}.")
+                logger.debug(f"No records found for address_id={family_id}.")
                 logger.debug("End of FamilyAPI.GET")
-                return f"No records found for family_id={family_id}.", 404
+                return f"No records found for address_id={family_id}.", 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No records found for family_id={family_id}.\n{e}"
+            error_msg = f"No records found for address_id={family_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of FamilyAPI.GET")
             return error_msg, 404

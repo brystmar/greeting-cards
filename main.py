@@ -6,7 +6,7 @@ from os import path
 from flask_restful import Api
 
 # App components
-from global_logger import logger
+from global_logger import logger  # Initialize the logger before doing anything else
 from backend import create_app
 from routes.address import AddressCollectionApi
 from routes.family import FamilyCollectionApi, FamilyApi
@@ -21,7 +21,7 @@ logger.info("Initialized the API for this Flask app")
 # Define the functional endpoints
 api.add_resource(AddressCollectionApi, '/api/v1/addresses')
 api.add_resource(FamilyCollectionApi, '/api/v1/families')
-api.add_resource(FamilyApi, '/api/v1/family/', '/api/v1/family/<family_id>')
+api.add_resource(FamilyApi, '/api/v1/family/', '/api/v1/family/<address_id>')
 
 # Define a global variable to indicate whether this app is running on the local machine
 is_running_locally = "pycharm" in path.abspath(path.dirname(__file__)).lower()

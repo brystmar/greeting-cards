@@ -21,7 +21,9 @@ class Address(db.Model):
     created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
     last_modified = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
         # Ensure each record has created and last_modified dates
         logger.debug(f"id: {self.id}, created: {self.created_date}")
         print(f"id: {self.id}, created: {self.created_date}")
@@ -36,7 +38,7 @@ class Address(db.Model):
     def to_dict(self):
         return {
             "id":                  self.id,
-            "family_id":           self.family_id,
+            "address_id":           self.family_id,
             "line_1":              self.line_1,
             "line_2":              self.line_2 if self.line_2 else None,
             "city":                self.city,
@@ -66,6 +68,9 @@ class Family(db.Model):
     relationship = db.Column(db.String)
     relationship_type = db.Column(db.String)
     addresses = db.relationship("Address", backref="family", lazy=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def to_dict(self):
         return {
@@ -118,7 +123,7 @@ class Gift(db.Model):
         return {
             "id":          self.id,
             "event_id":    self.event_id,
-            "family_id":   self.family_id,
+            "address_id":   self.family_id,
             "description": self.description,
             "notes":       self.notes
         }
@@ -144,7 +149,7 @@ class Card(db.Model):
             "was_card_sent": self.was_card_sent,
             "event_id":      self.event_id,
             "gift_id":       self.gift_id,
-            "family_id":     self.family_id,
+            "address_id":     self.family_id,
             "address_id":    self.address_id
         }
 
