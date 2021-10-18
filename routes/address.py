@@ -10,16 +10,16 @@ import json
 logger = getLogger()
 
 
-class AddressApi(Resource):
-    """Endpoint: /api/v1/address"""
+class AddressCollectionApi(Resource):
+    """Endpoint: /api/v1/addresses"""
 
     def get(self) -> json:
         """Return all addresses from the database"""
-        logger.debug("Start of AddressAPI.GET")
-        logger.debug(f"Request: {request}.")
+        logger.debug("Start of AddressCollectionAPI.GET")
+        logger.debug(request)
 
+        # Retrieve all addresses from the db, sorted by id
         try:
-            # Retrieve all addresses from the db, sorted by id
             addresses = Address.query.order_by(Address.id).all()
             output = []
 
@@ -27,10 +27,12 @@ class AddressApi(Resource):
                 output.append(address.to_dict())
 
             logger.debug("End of AddressAPI.GET")
-            return output
+            return output, 200
 
         except SQLAlchemyError as e:
             logger.debug(f"SQLAlchemyError retrieving data: {e}")
+            return e, 500
 
         except BaseException as e:
             logger.debug(f"BaseException retrieving data: {e}")
+            return e, 500
