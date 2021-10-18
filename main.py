@@ -7,7 +7,7 @@ from flask_restful import Api
 
 # App components
 from global_logger import logger
-from backend import create_app, db
+from backend import create_app
 from routes.address import AddressApi
 from routes.family import FamilyApi
 
