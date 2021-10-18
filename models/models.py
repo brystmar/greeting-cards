@@ -45,8 +45,10 @@ class Address(db.Model):
             "country":             self.country,
             "is_current":          self.is_current,
             "is_likely_to_change": self.is_likely_to_change,
-            "created_date":        self.created_date.strftime("%Y-%m-%d %H:%M:%M.%f") if self.created_date else None,
-            "last_modified":       self.last_modified.strftime("%Y-%m-%d %H:%M:%M.%f") if self.last_modified else None
+            "created_date":        self.created_date.strftime(
+                "%Y-%m-%d %H:%M:%M.%f") if self.created_date else None,
+            "last_modified":       self.last_modified.strftime(
+                "%Y-%m-%d %H:%M:%M.%f") if self.last_modified else None
         }
 
     def __repr__(self):
@@ -67,11 +69,11 @@ class Family(db.Model):
 
     def to_dict(self):
         return {
-            "id": self.id,
-            "nickname": self.nickname,
-            "surname": self.surname,
-            "formal_name": self.formal_name,
-            "relationship": self.relationship,
+            "id":                self.id,
+            "nickname":          self.nickname,
+            "surname":           self.surname,
+            "formal_name":       self.formal_name,
+            "relationship":      self.relationship,
             "relationship_type": self.relationship_type
         }
 
@@ -85,9 +87,18 @@ class Event(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
     name = db.Column(db.String)
-    date = db.Column(db.String)
+    date = db.Column(db.DateTime)
     year = db.Column(db.Integer, default=datetime.now().year)
     is_archived = db.Column(db.Integer, default=0)
+
+    def to_dict(self):
+        return {
+            "id":          self.id,
+            "name":        self.name,
+            "date":        self.date.strftime("%Y-%m-%d") if self.date else None,
+            "year":        self.year,
+            "is_archived": self.is_archived
+        }
 
     def __repr__(self):
         return f"Event(id={self.id}, name={self.name}, date={self.date}, year={self.year}, " \
@@ -103,6 +114,15 @@ class Gift(db.Model):
     description = db.Column(db.String)
     notes = db.Column(db.String)
 
+    def to_dict(self):
+        return {
+            "id":          self.id,
+            "event_id":    self.event_id,
+            "family_id":   self.family_id,
+            "description": self.description,
+            "notes":       self.notes
+        }
+
     def __repr__(self):
         return f"Gift(id={self.id}, event={self.event_id}, fam={self.family_id}, " \
                f"description={self.description}, notes={self.notes}"
@@ -117,6 +137,16 @@ class Card(db.Model):
     gift_id = db.Column(db.Integer, db.ForeignKey('gift.id'))
     family_id = db.Column(db.Integer, db.ForeignKey('family.id'))
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
+
+    def to_dict(self):
+        return {
+            "id":            self.id,
+            "was_card_sent": self.was_card_sent,
+            "event_id":      self.event_id,
+            "gift_id":       self.gift_id,
+            "family_id":     self.family_id,
+            "address_id":    self.address_id
+        }
 
     def __repr__(self):
         return f"Card(id={self.id}, was_card_sent={self.was_card_sent}, event={self.event_id}, " \
