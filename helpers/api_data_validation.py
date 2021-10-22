@@ -11,4 +11,3 @@ def ensure_request_contains_data(data, api_name="api"):
         logger.debug("No data found in request body.")
         logger.debug(f"End of {api_name}")
         return False
-

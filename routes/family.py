@@ -13,7 +13,10 @@ logger = getLogger()
 
 
 class FamilyCollectionApi(Resource):
-    """Endpoint: /api/v1/families"""
+    """
+    Endpoint:   /api/v1/all_families
+    Methods:    GET
+    """
 
     def get(self) -> json:
         """Return all families from the database"""
@@ -45,14 +48,13 @@ class FamilyCollectionApi(Resource):
 
 class FamilyApi(Resource):
     """
-    Endpoints:
-        POST                /api/v1/family/
-        GET, PUT, DELETE    /api/v1/family/<address_id>
+    Endpoint:   /api/v1/family
+    Methods:    GET, POST, PUT, DELETE
     """
 
-    def get(self, family_id) -> json:
+    def get(self) -> json:
         """Return data for the specified family"""
-        logger.debug(f"Start of FamilyAPI.GET for family={family_id}")
+        logger.debug(f"Start of FamilyAPI.GET")
         logger.debug(request)
 
         # Validate that the provided address_id can be converted to an integer
@@ -130,7 +132,7 @@ class FamilyApi(Resource):
             logger.debug("End of FamilyAPI.POST")
             return error_msg, 500
 
-    def put(self, family_id) -> json:
+    def put(self) -> json:
         """Update an existing record"""
         logger.debug(f"Start of FamilyAPI.PUT")
         logger.debug(request)
@@ -187,9 +189,9 @@ class FamilyApi(Resource):
             logger.debug("End of FamilyAPI.PUT")
             return error_msg, 500
 
-    def delete(self, family_id) -> json:
+    def delete(self) -> json:
         """Delete the specified record"""
-        logger.debug(f"Start of FamilyAPI.DELETE for family={family_id}")
+        logger.debug(f"Start of FamilyAPI.DELETE")
         logger.debug(request)
 
         # Validate that the provided address_id can be converted to an integer

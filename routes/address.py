@@ -4,16 +4,21 @@ from datetime import datetime
 from backend import db
 from models.models import Address
 from flask import request
-from flask_restful import Resource
+from flask_restful import Resource, reqparse
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
-from helpers.api_data_validation import ensure_request_contains_data
 import json
 
 logger = getLogger()
 
+# Initialize a parser for the request parameters
+parser = reqparse.RequestParser()
+
 
 class AddressCollectionApi(Resource):
-    """Endpoint: /api/v1/addresses"""
+    """
+    Endpoint:   /api/v1/all_addresses
+    Methods:    GET
+    """
 
     def get(self) -> json:
         """Return all addresses from the database"""
@@ -23,8 +28,22 @@ class AddressCollectionApi(Resource):
         # Retrieve all addresses from the db, sorted by id
         try:
             addresses = Address.query.order_by(Address.id).all()
+            logger.info("Address found!")
 
-            # Compile these data into a list
+        except SQLAlchemyError as e:
+            error_msg = f"SQLAlchemyError retrieving data: {e}"
+            logger.info(error_msg)
+            logger.debug("End of AddressCollectionAPI.GET")
+            return error_msg, 500
+
+        except BaseException as e:
+            error_msg = f"BaseException retrieving data: {e}"
+            logger.info(error_msg)
+            logger.debug("End of AddressCollectionAPI.GET")
+            return error_msg, 500
+
+        # Compile these data into a list
+        try:
             output = []
             for address in addresses:
                 output.append(address.to_dict())
@@ -32,37 +51,39 @@ class AddressCollectionApi(Resource):
             logger.debug("End of AddressCollectionAPI.GET")
             return output, 200
 
-        except SQLAlchemyError as e:
-            logger.debug(f"SQLAlchemyError retrieving data: {e}")
-            logger.debug("End of AddressCollectionAPI.GET")
-            return e, 500
-
         except BaseException as e:
-            logger.debug(f"BaseException retrieving data: {e}")
+            error_msg = f"Error compiling data into a list of `dict` to return: {e}"
+            logger.info(error_msg)
             logger.debug("End of AddressCollectionAPI.GET")
-            return e, 500
+            return error_msg, 500
 
 
 class AddressApi(Resource):
     """
-    Endpoints:
-        POST                /api/v1/address/
-        GET, PUT, DELETE    /api/v1/address/<address_id>
+    Endpoint:   /api/v1/address
+    Methods:    GET, POST, PUT, DELETE
     """
 
-    def get(self, address_id) -> json:
-        """Return data for the specified address"""
-        logger.debug(f"Start of AddressAPI.GET for address={address_id}")
+    def get(self) -> json:
+        """Return data for the specified address_id"""
+        logger.debug(f"Start of AddressAPI.GET")
         logger.debug(request)
 
-        # Validate that the provided address_id can be converted to an integer
+        # Define the parameters used by this endpoint
+        parser.add_argument("address_id", type=int, trim=True, nullable=False, store_missing=False,
+                            required=True)
+
+        # Parse the provided arguments
+        args = parser.parse_args()
+        logger.debug(f"Args parsed successfully: {args.__str__()}")
+
+        # Validate that an address_id was provided
         try:
-            logger.debug(f"Provided address_id={int(address_id)} is convertible to an integer.")
-        except TypeError as e:
-            logger.debug(f"Provided address_id is type {type(address_id)} and cannot be "
-                         f"converted to an integer.")
-            logger.debug(f"End of AddressAPI.GET")
-            return f"Value for address_id must be an integer. {e}", 400
+            address_id = args["address_id"]
+            logger.debug(f"Address_id={address_id} was read successfully")
+        except KeyError as e:
+            logger.info(f"Error parsing address_id: no value was provided. {e}")
+            return f"No value provided for address_id.", 400
 
         # Retrieve the selected record
         try:
@@ -70,18 +91,18 @@ class AddressApi(Resource):
 
             if address:
                 # Record successfully returned from the db
-                logger.debug(f"Address identified: {address.to_dict()}")
+                logger.info(f"Address found!")
                 logger.debug("End of AddressAPI.GET")
                 return address.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No records found for address_id={address_id}.")
+                logger.info(f"No records found for address_id={address_id}.")
                 logger.debug("End of AddressAPI.GET")
                 return f"No records found for address_id={address_id}.", 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No records found for address_id={address_id}.\n{e}"
-            logger.debug(error_msg)
+            logger.info(error_msg)
             logger.debug(f"End of AddressAPI.GET")
             return error_msg, 404
 
@@ -90,30 +111,24 @@ class AddressApi(Resource):
         logger.debug(f"Start of AddressAPI.POST")
         logger.debug(request)
 
-        # Ensure data was included in the request body
-        if not ensure_request_contains_data(data=request.data, api_name="AddressAPI.POST"):
-            return "POST request must contain a body.", 400
+        # Define the parameters used by this endpoint
+        parser.add_argument("family_id", type=int, trim=True, nullable=False, required=True)
+        parser.add_argument("line_1", type=str, trim=True, nullable=False)
+        parser.add_argument("line_2", type=str, trim=True, nullable=False)
+        parser.add_argument("city", type=str, trim=True, nullable=False)
+        parser.add_argument("state", type=str, trim=True, nullable=False)
+        parser.add_argument("zip", type=str, trim=True, nullable=False)
+        parser.add_argument("country", type=str, trim=True, nullable=False, default="United States")
+        parser.add_argument("is_current", type=int, trim=True, nullable=False, default=1)
+        parser.add_argument("is_likely_to_change", type=int, trim=True, nullable=False, default=0)
 
-        # Parse the request body
-        try:
-            data = json.loads(request.data.decode())
-            logger.debug(f"Data provided: {data}")
-
-        except json.JSONDecodeError as e:
-            error_msg = f"Error attempting to decode the provided JSON.\n" \
-                        f"{request.data.__str__()},\n{e}"
-            logger.debug(error_msg)
-            return error_msg, 400
-
-        except BaseException as e:
-            error_msg = f"Unknown error attempting to decode JSON.\n{e}"
-            logger.debug(error_msg)
-            return error_msg, 400
+        # Parse the arguments provided
+        args = parser.parse_args()
 
         # Create a new Address record using the provided data
         try:
-            logger.debug("Attempting to create a new Address record from provided data.")
-            new_address = Address(**data)
+            logger.debug(f"Attempting to create an Address from provided data: {args.__str__()}.")
+            new_address = Address(**args.__str__())
             new_address.date_created = datetime.utcnow()
             new_address.last_modified = new_address.date_created
             logger.debug(f"New record successfully created: {new_address.to_dict()}")
@@ -132,48 +147,41 @@ class AddressApi(Resource):
             logger.debug("End of AddressAPI.POST")
             return error_msg, 500
 
-    def put(self, address_id) -> json:
+    def put(self) -> json:
         """Update an existing record"""
         logger.debug(f"Start of AddressAPI.PUT")
         logger.debug(request)
 
-        # Ensure data was included in the request body
-        if not ensure_request_contains_data(data=request.data, api_name="AddressAPI.PUT"):
-            return "PUT request must contain a body.", 400
+        # Define the parameters used by this endpoint
+        parser.add_argument("address_id", type=int, trim=True, nullable=False, store_missing=False)
+        parser.add_argument("family_id", type=int, trim=True, nullable=False, required=True)
+        parser.add_argument("line_1", type=str, trim=True, nullable=False)
+        parser.add_argument("line_2", type=str, trim=True, nullable=False)
+        parser.add_argument("city", type=str, trim=True, nullable=False)
+        parser.add_argument("state", type=str, trim=True, nullable=False)
+        parser.add_argument("zip", type=str, trim=True, nullable=False)
+        parser.add_argument("country", type=str, trim=True, nullable=False, default="United States")
+        parser.add_argument("is_current", type=int, trim=True, nullable=False, default=1)
+        parser.add_argument("is_likely_to_change", type=int, trim=True, nullable=False, default=0)
 
-        # Validate that the provided address_id can be converted to an integer
-        try:
-            logger.debug(f"Provided address_id={int(address_id)} is convertible to an integer.")
-        except TypeError as e:
-            logger.debug(f"Provided address_id is type {type(address_id)} and cannot be "
-                         f"converted to an integer.")
-            logger.debug(f"End of AddressAPI.PUT")
-            return f"Value for address_id must be an integer. {e}", 400
+        # Parse the arguments provided
+        args = parser.parse_args()
 
-        # Parse the request body
-        try:
-            data = json.loads(request.data.decode())
-            logger.debug(f"Data provided: {data}")
-
-        except json.JSONDecodeError as e:
-            error_msg = f"Error attempting to decode the provided JSON.\n" \
-                        f"{request.data.__str__()},\n{e}"
-            logger.debug(error_msg)
-            return error_msg, 400
-
-        except BaseException as e:
-            error_msg = f"Unknown error attempting to decode JSON.\n{e}"
-            logger.debug(error_msg)
-            return error_msg, 400
+        address_id = args["address_id"]
 
         # Retrieve the specified address record
         try:
             address = Address.query.get(address_id)
-            address.nickname = data.nickname
-            address.surname = data.surname
-            address.formal_name = data.formal_name
-            address.relationship = data.relationship
-            address.relationship_type = data.relationship_type
+            address.family_id = args["family_id"]
+            address.line_1 = args["line_1"]
+            address.line_2 = args["line_2"]
+            address.city = args["city"]
+            address.state = args["state"]
+            address.zip = args["zip"]
+            address.country = args["country"]
+            address.is_current = args["is_current"]
+            address.is_likely_to_change = args["is_likely_to_change"]
+            address.last_modified = datetime.utcnow()
 
             # Commit these changes to the db
             logger.debug("Attempting to commit db changes")
@@ -189,19 +197,27 @@ class AddressApi(Resource):
             logger.debug("End of AddressAPI.PUT")
             return error_msg, 500
 
-    def delete(self, address_id) -> json:
+    def delete(self) -> json:
         """Delete the specified record"""
-        logger.debug(f"Start of AddressAPI.DELETE for address={address_id}")
+        logger.debug(f"Start of AddressAPI.DELETE")
         logger.debug(request)
 
-        # Validate that the provided address_id can be converted to an integer
+        # Define the parameters used by this endpoint
+        parser.add_argument("address_id", type=int, trim=True, nullable=False, store_missing=False,
+                            required=True)
+
+        # Parse the provided arguments
+        args = parser.parse_args()
+        logger.debug(f"Args parsed successfully: {args.__str__()}")
+
+        # Validate that an address_id was provided
         try:
-            logger.debug(f"Provided address_id={int(address_id)} is convertible to an integer.")
-        except TypeError as e:
-            logger.debug(f"Provided address_id is type {type(address_id)} and cannot be "
-                         f"converted to an integer.")
-            logger.debug(f"End of AddressAPI.GET")
-            return f"Value for address_id must be an integer. {e}", 400
+            address_id = args["address_id"]
+            logger.debug(f"Address_id={address_id} was read successfully")
+        except KeyError as e:
+            logger.info(f"Error parsing address_id: no value was provided. {e}")
+            logger.debug(f"End of AddressAPI.DELETE")
+            return f"No value provided for address_id.", 400
 
         # Retrieve the selected record
         try:
@@ -215,17 +231,24 @@ class AddressApi(Resource):
                 logger.debug("About to commit this delete to the db.")
                 db.session.commit()
                 logger.debug("Commit completed.")
+                logger.info("Address successfully deleted.")
 
-                logger.debug("End of AddressAPI.GET")
+                logger.debug(f"End of AddressAPI.DELETE")
                 return address.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No records found for address_id={address_id}.")
-                logger.debug("End of AddressAPI.GET")
+                logger.info(f"No records found for address_id={address_id}.")
+                logger.debug(f"End of AddressAPI.DELETE")
                 return f"No records found for address_id={address_id}.", 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No records found for address_id={address_id}.\n{e}"
-            logger.debug(error_msg)
-            logger.debug(f"End of AddressAPI.GET")
+            logger.info(error_msg)
+            logger.debug(f"End of AddressAPI.DELETE")
             return error_msg, 404
+
+        except SQLAlchemyError as e:
+            error_msg = f"SQLAlchemy error when attempting to delete address_id={address_id}.\n{e}"
+            logger.info(error_msg)
+            logger.debug(f"End of AddressAPI.DELETE")
+            return error_msg, 500

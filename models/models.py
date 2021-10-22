@@ -38,7 +38,7 @@ class Address(db.Model):
     def to_dict(self):
         return {
             "id":                  self.id,
-            "address_id":           self.family_id,
+            "family_id":           self.family_id,
             "line_1":              self.line_1,
             "line_2":              self.line_2 if self.line_2 else None,
             "city":                self.city,
@@ -123,7 +123,7 @@ class Gift(db.Model):
         return {
             "id":          self.id,
             "event_id":    self.event_id,
-            "address_id":   self.family_id,
+            "address_id":  self.family_id,
             "description": self.description,
             "notes":       self.notes
         }
@@ -149,7 +149,7 @@ class Card(db.Model):
             "was_card_sent": self.was_card_sent,
             "event_id":      self.event_id,
             "gift_id":       self.gift_id,
-            "address_id":     self.family_id,
+            "family_id":     self.family_id,
             "address_id":    self.address_id
         }
 
