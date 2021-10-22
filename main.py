@@ -19,10 +19,10 @@ api = Api(app)
 logger.info("Initialized the API for this Flask app")
 
 # Define the functional endpoints
-api.add_resource(FamilyCollectionApi, "/api/v1/all_families")
 api.add_resource(FamilyApi, "/api/v1/family")
-api.add_resource(AddressCollectionApi, "/api/v1/all_addresses")
+api.add_resource(FamilyCollectionApi, "/api/v1/all_families")
 api.add_resource(AddressApi, "/api/v1/address")
+api.add_resource(AddressCollectionApi, "/api/v1/all_addresses")
 
 # Define a global variable to indicate whether this app is running on the local machine
 is_running_locally = "pycharm" in path.abspath(path.dirname(__file__)).lower()

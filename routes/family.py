@@ -1,15 +1,17 @@
 """Defines the family-related endpoints."""
 from logging import getLogger
-from datetime import datetime
 from backend import db
 from models.models import Family
 from flask import request
-from flask_restful import Resource
+from flask_restful import Resource, reqparse
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 from helpers.api_data_validation import ensure_request_contains_data
 import json
 
 logger = getLogger()
+
+# Initialize a parser for the request parameters
+parser = reqparse.RequestParser(trim=True)
 
 
 class FamilyCollectionApi(Resource):
@@ -26,24 +28,34 @@ class FamilyCollectionApi(Resource):
         # Retrieve all families from the db, sorted by id
         try:
             families = Family.query.order_by(Family.id).all()
+            logger.info("Families retrieved successfully!")
 
-            # Compile these data into a list
+        except SQLAlchemyError as e:
+            error_msg = f"SQLAlchemyError retrieving data: {e}"
+            logger.info(error_msg)
+            logger.debug("End of FamilyCollectionAPI.GET")
+            return error_msg, 500
+
+        except BaseException as e:
+            error_msg = f"BaseException retrieving data: {e}"
+            logger.info(error_msg)
+            logger.debug("End of FamilyCollectionAPI.GET")
+            return error_msg, 500
+
+        # Compile these data into a list
+        try:
             output = []
-            for fam in families:
-                output.append(fam.to_dict())
+            for family in families:
+                output.append(family.to_dict())
 
             logger.debug("End of FamilyAPI.GET")
             return output, 200
 
-        except SQLAlchemyError as e:
-            logger.debug(f"SQLAlchemyError retrieving data: {e}")
-            logger.debug("End of FamilyAPI.GET")
-            return e, 500
-
         except BaseException as e:
-            logger.debug(f"BaseException retrieving data: {e}")
-            logger.debug("End of FamilyAPI.GET")
-            return e, 500
+            error_msg = f"Error compiling data into a list of `dict` to return: {e}"
+            logger.info(error_msg)
+            logger.debug("End of FamilyCollectionAPI.GET")
+            return error_msg, 500
 
 
 class FamilyApi(Resource):
@@ -53,18 +65,25 @@ class FamilyApi(Resource):
     """
 
     def get(self) -> json:
-        """Return data for the specified family"""
+        """Return data for the specified family_id"""
         logger.debug(f"Start of FamilyAPI.GET")
         logger.debug(request)
 
-        # Validate that the provided address_id can be converted to an integer
+        # Define the parameters used by this endpoint
+        parser.add_argument("family_id", type=int, nullable=False, store_missing=False,
+                            required=True)
+
+        # Parse the provided arguments
+        args = parser.parse_args()
+        logger.debug(f"Args parsed successfully: {args.__str__()}")
+
+        # Validate that a family_id was provided
         try:
-            logger.debug(f"Provided address_id={int(family_id)} is convertible to an integer.")
-        except TypeError as e:
-            logger.debug(f"Provided address_id is type {type(family_id)} and cannot be "
-                         f"converted to an integer.")
-            logger.debug(f"End of FamilyAPI.GET")
-            return f"Value for address_id must be an integer. {e}", 400
+            family_id = args["family_id"]
+            logger.debug(f"Family_id={family_id} was read successfully")
+        except KeyError as e:
+            logger.info(f"Error parsing family_id: no value was provided. {e}")
+            return f"Must provide a value for family_id.", 400
 
         # Retrieve the selected record
         try:
@@ -72,113 +91,97 @@ class FamilyApi(Resource):
 
             if family:
                 # Record successfully returned from the db
-                logger.debug(f"Family identified: {family.to_dict()}")
+                logger.info(f"Found the requested family: {family.to_dict()}")
                 logger.debug("End of FamilyAPI.GET")
                 return family.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No records found for address_id={family_id}.")
+                logger.debug(f"No records found for family_id={family_id}.")
                 logger.debug("End of FamilyAPI.GET")
-                return f"No records found for address_id={family_id}.", 404
+                return f"No records found for family_id={family_id}.", 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No records found for address_id={family_id}.\n{e}"
+            error_msg = f"No records found for family_id={family_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of FamilyAPI.GET")
             return error_msg, 404
 
     def post(self) -> json:
-        """Add a new family to the database"""
+        """Add a new family record to the database"""
         logger.debug(f"Start of FamilyAPI.POST")
         logger.debug(request)
 
-        # Ensure data was included in the request body
-        if not ensure_request_contains_data(data=request.data, api_name="FamilyAPI.POST"):
-            return "POST request must contain a body.", 400
+        # Define the parameters used by this endpoint
+        parser.add_argument("nickname", type=str)
+        parser.add_argument("surname", type=str)
+        parser.add_argument("formal_name", type=str)
+        parser.add_argument("relationship", type=str)
+        parser.add_argument("relationship_type", type=str)
 
-        # Parse the request body
-        try:
-            data = json.loads(request.data.decode())
-            logger.debug(f"Data provided: {data}")
-
-        except json.JSONDecodeError as e:
-            error_msg = f"Error attempting to decode the provided JSON.\n" \
-                        f"{request.data.__str__()},\n{e}"
-            logger.debug(error_msg)
-            return error_msg, 400
-
-        except BaseException as e:
-            error_msg = f"Unknown error attempting to decode JSON.\n{e}"
-            logger.debug(error_msg)
-            return error_msg, 400
+        # Parse the arguments provided
+        args = parser.parse_args()
+        logger.debug(f"Args parsed successfully: {args.__str__()}")
 
         # Create a new Family record using the provided data
         try:
-            logger.debug("Attempting to create a new Family record from provided data.")
-            new_family = Family(**data)
-            logger.debug(f"New record successfully created: {new_family.to_dict()}")
+            logger.debug(f"Attempting to create a Family from the args.")
+            new_family = Family(**args.__str__())
+            logger.info(f"New record successfully created: {new_family.to_dict()}")
 
             # Commit this new record so the db generates an id
             logger.debug("Attempting to commit data")
             db.session.commit()
             logger.debug("Commit completed")
 
+            # Return the address_id to the requester
             logger.debug("End of FamilyAPI.POST")
             return new_family.id, 201
 
         except SQLAlchemyError as e:
-            error_msg = f"Unable to create new Family record.\n{e}"
+            error_msg = f"Unable to create a new Family record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of FamilyAPI.POST")
             return error_msg, 500
 
     def put(self) -> json:
-        """Update an existing record"""
+        """Update an existing record by family_id"""
         logger.debug(f"Start of FamilyAPI.PUT")
         logger.debug(request)
 
-        # Ensure data was included in the request body
-        if not ensure_request_contains_data(data=request.data, api_name="FamilyAPI.PUT"):
-            return "PUT request must contain a body.", 400
+        # Define the parameters used by this endpoint
+        parser.add_argument("nickname", type=str)
+        parser.add_argument("surname", type=str)
+        parser.add_argument("formal_name", type=str)
+        parser.add_argument("relationship", type=str)
+        parser.add_argument("relationship_type", type=str)
 
-        # Validate that the provided address_id can be converted to an integer
+        # Parse the arguments provided
+        args = parser.parse_args()
+        logger.debug(f"Args parsed successfully: {args.__str__()}")
+
+        # Validate that a family_id was provided
         try:
-            logger.debug(f"Provided address_id={int(family_id)} is convertible to an integer.")
-        except TypeError as e:
-            logger.debug(f"Provided address_id is type {type(family_id)} and cannot be "
-                         f"converted to an integer.")
-            logger.debug(f"End of FamilyAPI.PUT")
-            return f"Value for address_id must be an integer. {e}", 400
+            family_id = args["family_id"]
+            logger.debug(f"Family_id={family_id} was read successfully")
+        except KeyError as e:
+            logger.info(f"Error parsing family_id: no value was provided. {e}")
+            return f"Must provide a value for family_id.", 400
 
-        # Parse the request body
         try:
-            data = json.loads(request.data.decode())
-            logger.debug(f"Data provided: {data}")
-
-        except json.JSONDecodeError as e:
-            error_msg = f"Error attempting to decode the provided JSON.\n" \
-                        f"{request.data.__str__()},\n{e}"
-            logger.debug(error_msg)
-            return error_msg, 400
-
-        except BaseException as e:
-            error_msg = f"Unknown error attempting to decode JSON.\n{e}"
-            logger.debug(error_msg)
-            return error_msg, 400
-
-        # Retrieve the specified family record
-        try:
+            # Retrieve the specified family record
             family = Family.query.get(family_id)
-            family.nickname = data.nickname
-            family.surname = data.surname
-            family.formal_name = data.formal_name
-            family.relationship = data.relationship
-            family.relationship_type = data.relationship_type
+
+            # Update this record with the provided data
+            family.nickname = args["nickname"]
+            family.surname = args["surname"]
+            family.formal_name = args["formal_name"]
+            family.relationship = args["relationship"]
+            family.relationship_type = args["relationship_type"]
 
             # Commit these changes to the db
             logger.debug("Attempting to commit db changes")
             db.session.commit()
-            logger.debug("Changes saved to the database")
+            logger.info("Changes saved to the database")
 
             logger.debug("End of FamilyAPI.PUT")
             return family.id, 200
@@ -190,21 +193,29 @@ class FamilyApi(Resource):
             return error_msg, 500
 
     def delete(self) -> json:
-        """Delete the specified record"""
+        """Delete the specified record by family_id"""
         logger.debug(f"Start of FamilyAPI.DELETE")
         logger.debug(request)
 
-        # Validate that the provided address_id can be converted to an integer
-        try:
-            logger.debug(f"Provided address_id={int(family_id)} is convertible to an integer.")
-        except TypeError as e:
-            logger.debug(f"Provided address_id is type {type(family_id)} and cannot be "
-                         f"converted to an integer.")
-            logger.debug(f"End of FamilyAPI.GET")
-            return f"Value for address_id must be an integer. {e}", 400
+        # Define the parameters used by this endpoint
+        parser.add_argument("family_id", type=int, nullable=False, store_missing=False,
+                            required=True)
 
-        # Retrieve the selected record
+        # Parse the provided arguments
+        args = parser.parse_args()
+        logger.debug(f"Args parsed successfully: {args.__str__()}")
+
+        # Validate that a family_id was provided
         try:
+            family_id = args["family_id"]
+            logger.debug(f"Family_id={family_id} was read successfully")
+        except KeyError as e:
+            logger.info(f"Error parsing family_id: no value was provided. {e}")
+            logger.debug(f"End of AddressAPI.DELETE")
+            return f"No value provided for family_id.", 400
+
+        try:
+            # Retrieve the selected record
             family = Family.query.get(family_id)
 
             if family:
@@ -215,17 +226,18 @@ class FamilyApi(Resource):
                 logger.debug("About to commit this delete to the db.")
                 db.session.commit()
                 logger.debug("Commit completed.")
+                logger.info("Family record successfully deleted.")
 
                 logger.debug("End of FamilyAPI.GET")
                 return family.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No records found for address_id={family_id}.")
+                logger.debug(f"No record found for family_id={family_id}.")
                 logger.debug("End of FamilyAPI.GET")
-                return f"No records found for address_id={family_id}.", 404
+                return f"No record found for family_id={family_id}.", 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No records found for address_id={family_id}.\n{e}"
+            error_msg = f"No record found for family_id={family_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of FamilyAPI.GET")
             return error_msg, 404
