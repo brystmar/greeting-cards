@@ -64,7 +64,8 @@ class AddressApi(Resource):
     Methods:    GET, POST, PUT, DELETE
     """
 
-    def get(self) -> json:
+    @staticmethod
+    def get() -> json:
         """Return data for the specified address_id"""
         logger.debug(f"Start of AddressAPI.GET")
         logger.debug(request)
@@ -100,7 +101,8 @@ class AddressApi(Resource):
             logger.debug(f"End of AddressAPI.GET")
             return error_msg, 404
 
-    def post(self) -> json:
+    @staticmethod
+    def post() -> json:
         """Add a new address to the database"""
         logger.debug(f"Start of AddressAPI.POST")
         logger.debug(request)
@@ -145,7 +147,8 @@ class AddressApi(Resource):
             logger.debug("End of AddressAPI.POST")
             return error_msg, 500
 
-    def put(self) -> json:
+    @staticmethod
+    def put() -> json:
         """Update an existing record by address_id"""
         logger.debug(f"Start of AddressAPI.PUT")
         logger.debug(request)
@@ -196,7 +199,8 @@ class AddressApi(Resource):
             logger.debug("End of AddressAPI.PUT")
             return error_msg, 500
 
-    def delete(self) -> json:
+    @staticmethod
+    def delete() -> json:
         """Delete the specified record by address_id"""
         logger.debug(f"Start of AddressAPI.DELETE")
         logger.debug(request)

@@ -6,7 +6,7 @@ from os import path
 from flask_restful import Api
 
 # App components
-from global_logger import logger  # Initialize the logger before doing anything else
+from root_logger import logger  # Initialize the logger before doing anything else
 from backend import create_app
 from routes.address import AddressCollectionApi, AddressApi
 from routes.family import FamilyCollectionApi, FamilyApi

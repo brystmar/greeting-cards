@@ -64,7 +64,8 @@ class FamilyApi(Resource):
     Methods:    GET, POST, PUT, DELETE
     """
 
-    def get(self) -> json:
+    @staticmethod
+    def get() -> json:
         """Return data for the specified family_id"""
         logger.debug(f"Start of FamilyAPI.GET")
         logger.debug(request)
@@ -106,7 +107,8 @@ class FamilyApi(Resource):
             logger.debug(f"End of FamilyAPI.GET")
             return error_msg, 404
 
-    def post(self) -> json:
+    @staticmethod
+    def post() -> json:
         """Add a new family record to the database"""
         logger.debug(f"Start of FamilyAPI.POST")
         logger.debug(request)
@@ -143,7 +145,8 @@ class FamilyApi(Resource):
             logger.debug("End of FamilyAPI.POST")
             return error_msg, 500
 
-    def put(self) -> json:
+    @staticmethod
+    def put() -> json:
         """Update an existing record by family_id"""
         logger.debug(f"Start of FamilyAPI.PUT")
         logger.debug(request)
@@ -192,7 +195,8 @@ class FamilyApi(Resource):
             logger.debug("End of FamilyAPI.PUT")
             return error_msg, 500
 
-    def delete(self) -> json:
+    @staticmethod
+    def delete() -> json:
         """Delete the specified record by family_id"""
         logger.debug(f"Start of FamilyAPI.DELETE")
         logger.debug(request)
