@@ -5,7 +5,6 @@ from models.models import Family
 from flask import request
 from flask_restful import Resource, reqparse
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
-from helpers.api_data_validation import ensure_request_contains_data
 import json
 
 logger = getLogger()
@@ -20,6 +19,7 @@ class FamilyCollectionApi(Resource):
     Methods:    GET
     """
 
+    @staticmethod
     def get(self) -> json:
         """Return all families from the database"""
         logger.debug("Start of FamilyCollectionAPI.GET")

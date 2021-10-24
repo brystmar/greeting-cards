@@ -20,6 +20,7 @@ class AddressCollectionApi(Resource):
     Methods:    GET
     """
 
+    @staticmethod
     def get(self) -> json:
         """Return all addresses from the database"""
         logger.debug("Start of AddressCollectionAPI.GET")
@@ -183,6 +184,8 @@ class AddressApi(Resource):
             address.country = args["country"]
             address.is_current = args["is_current"]
             address.is_likely_to_change = args["is_likely_to_change"]
+
+            # Update last_modified to the current timestamp
             address.last_modified = datetime.utcnow()
 
             # Commit these changes to the db

@@ -47,7 +47,7 @@ class Address(db.Model):
     # All apartment addresses will default to 1 (True)
     is_likely_to_change = db.Column(db.Integer, default=0)
 
-    # Storing some basic metadata is helpful
+    # Storing basic metadata is helpful
     created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
     last_modified = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
 
@@ -60,11 +60,6 @@ class Address(db.Model):
             logger.debug(f"No created_date found for address_id={self.id}.  Setting to {now}.")
             self.created_date = now
             self.last_modified = now
-            db.session.commit()
-
-        if not self.last_modified:
-            self.last_modified = datetime.utcnow()
-            db.session.commit()
 
         # For apartment-dwellers, override the default value for is_likely_to_change
         if self.line_2 and "is_likely_to_change" not in kwargs.keys():
@@ -75,18 +70,18 @@ class Address(db.Model):
             "id":                  self.id,
             "family_id":           self.family_id,
             "line_1":              self.line_1,
-            "line_2":              self.line_2 if self.line_2 else None,
+            "line_2":              self.line_2,
             "city":                self.city,
             "state":               self.state,
             "zip":                 self.zip,
             "country":             self.country,
-            "full_address":        self.full_address if self.full_address else None,
+            "full_address":        self.full_address,
             "is_current":          self.is_current,
             "is_likely_to_change": self.is_likely_to_change,
             "created_date":        self.created_date.strftime(
-                "%Y-%m-%d %H:%M:%M.%f") if self.created_date else None,
+                "%Y-%m-%d %H:%M:%M.%f") if self.created_date else datetime.utcnow(),
             "last_modified":       self.last_modified.strftime(
-                "%Y-%m-%d %H:%M:%M.%f") if self.last_modified else None
+                "%Y-%m-%d %H:%M:%M.%f") if self.last_modified else datetime.utcnow()
         }
 
     def __repr__(self):
@@ -111,8 +106,11 @@ class Family(db.Model):
     # Human-friendly reference for a particular family
     nickname = db.Column(db.String, unique=True)
 
+    # First names of the heads of household
+    first_names = db.Column(db.String)
+
     # Primary surname for this family.  Households with multiple surnames will be challenging
-    #  to implement; I'll need to find an elegant solution for this down the road.
+    #  to implement; I'll find a better solution for this down the road.
     surname = db.Column(db.String)
 
     # When addressing a formal letter, how should this household be addressed?  Examples:
@@ -131,6 +129,9 @@ class Family(db.Model):
     # For family relationships, did these originate from mine or from my wife's side of the family?
     family_side = db.Column(db.String)
 
+    # Additional notes about this family, such as the name of their kids or pets
+    notes = db.Column(db.String)
+
     # Easy SQLAlchemy backref for addresses which match this family.  Not a discrete data point.
     addresses = db.relationship("Address", backref="family", lazy=True)
 
@@ -141,17 +142,20 @@ class Family(db.Model):
         return {
             "id":                self.id,
             "nickname":          self.nickname,
+            "first_names":       self.first_names,
             "surname":           self.surname,
             "formal_name":       self.formal_name,
             "relationship":      self.relationship,
             "relationship_type": self.relationship_type,
-            "family_side":       self.family_side
+            "family_side":       self.family_side,
+            "notes":             self.notes
         }
 
     def __repr__(self):
-        return f"Family(id={self.id}, nick={self.nickname}, surname={self.surname}, " \
-               f"rel={self.relationship}, rel_type={self.relationship_type}, " \
-               f"family_side={self.family_side}"
+        return f"Family(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
+               f"surname={self.surname}, rel={self.relationship}, " \
+               f"rel_type={self.relationship_type}, family_side={self.family_side}, " \
+               f"notes={self.notes}"
 
 
 class Event(db.Model):
@@ -160,9 +164,17 @@ class Event(db.Model):
 
     # Unique identifier is a simple auto-increment integer handled by the db
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
+
+    # Descriptive name of the event
     name = db.Column(db.String)
+
+    # Date of the event, if applicable
     date = db.Column(db.DateTime)
+
+    # For annual events like holiday cards, it makes more sense to only capture the event's year
     year = db.Column(db.Integer, default=datetime.now().year)
+
+    # Events get archived once all greeting (or thank-you) cards are sent
     is_archived = db.Column(db.Integer, default=0)
 
     def to_dict(self):
