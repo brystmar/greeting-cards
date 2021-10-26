@@ -7,8 +7,7 @@ logger = getLogger()
 
 class Address(db.Model):
     """
-    Table to store the address info for each family / household.
-    Each family may have multiple addresses.
+    Table to store address details for a household, which may have multiple addresses.
     """
 
     # Set the name of this table
@@ -17,8 +16,8 @@ class Address(db.Model):
     # Unique identifier is a simple auto-increment integer handled by the db
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
 
-    # Related family_id for this address record
-    family_id = db.Column(db.Integer, db.ForeignKey('family.id'))
+    # Related household_id for this address record
+    household_id = db.Column(db.Integer, db.ForeignKey('household.id'))
 
     # First line of the street address
     line_1 = db.Column(db.String)
@@ -41,7 +40,7 @@ class Address(db.Model):
     #  this multi-line text blob as the mailing address
     full_address = db.Column(db.BLOB)
 
-    # Quick way to identify stale data
+    # Quick way to flag stale data, or for friends who move home temporarily
     is_current = db.Column(db.Integer, default=1)
 
     # All apartment addresses will default to 1 (True)
@@ -68,7 +67,7 @@ class Address(db.Model):
     def to_dict(self):
         return {
             "id":                  self.id,
-            "family_id":           self.family_id,
+            "household_id":        self.household_id,
             "line_1":              self.line_1,
             "line_2":              self.line_2,
             "city":                self.city,
@@ -85,31 +84,31 @@ class Address(db.Model):
         }
 
     def __repr__(self):
-        return f"Address(id={self.id}, fam={self.family_id}, L1={self.line_1}, L2={self.line_1}, " \
+        return f"Addy(id={self.id}, hh={self.household_id}, L1={self.line_1}, L2={self.line_1}, " \
                f"city={self.city}, state={self.state}, zip={self.zip}, country={self.country}, " \
                f"full_addy={self.full_address}, is_current={self.is_current}"
 
 
-class Family(db.Model):
+class Household(db.Model):
     """
-    Table to store data about each family (household?) in the database.
+    Table to store data about each household.
     This schema is almost certainly not optimally efficient, but even worrying
     about that is firmly out of scope.
     """
 
     # Set the name of this table
-    __tablename__ = "family"
+    __tablename__ = "household"
 
     # Unique identifier is a simple auto-increment integer handled by the db
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
 
-    # Human-friendly reference for a particular family
+    # Human-friendly reference for a particular household
     nickname = db.Column(db.String, unique=True)
 
     # First names of the heads of household
     first_names = db.Column(db.String)
 
-    # Primary surname for this family.  Households with multiple surnames will be challenging
+    # Primary surname for this household.  Households with multiple surnames will be challenging
     #  to implement; I'll find a better solution for this down the road.
     surname = db.Column(db.String)
 
@@ -119,21 +118,21 @@ class Family(db.Model):
     #  Dave & Pat Johnson
     formal_name = db.Column(db.String)
 
-    # Family or Friends?
+    # List: Immediate Household, Grandparents, Aunts & Uncles, Cousins, Childhood friends,
+    #  Family friends, Work friends, Colleagues, Neighbors, Acquaintances, etc.
     relationship = db.Column(db.String)
 
-    # List: Parents, Grandparents, Siblings, Aunts & Uncles, Cousins, Childhood friends,
-    #  Family friends, Work friends, Colleagues, Neighbors, Acquaintances, etc.
+    # Defines this household as either Friends or Family
     relationship_type = db.Column(db.String)
 
-    # For family relationships, did these originate from mine or from my wife's side of the family?
+    # For family relationships, did these originate from mine or from my spouse's side?
     family_side = db.Column(db.String)
 
-    # Additional notes about this family, such as the name of their kids or pets
+    # Additional notes about this household, such as the name of their kids or pets
     notes = db.Column(db.String)
 
-    # Easy SQLAlchemy backref for addresses which match this family.  Not a discrete data point.
-    addresses = db.relationship("Address", backref="family", lazy=True)
+    # Easy SQLAlchemy backref for addresses which match this household
+    addresses = db.relationship("Address", backref="household", lazy=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -152,7 +151,7 @@ class Family(db.Model):
         }
 
     def __repr__(self):
-        return f"Family(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
+        return f"Household(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
                f"surname={self.surname}, rel={self.relationship}, " \
                f"rel_type={self.relationship_type}, family_side={self.family_side}, " \
                f"notes={self.notes}"
@@ -197,22 +196,30 @@ class Gift(db.Model):
 
     # Unique identifier is a simple auto-increment integer handled by the db
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
+
+    # Event that the gift was from
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
-    family_id = db.Column(db.Integer, db.ForeignKey('family.id'))
+
+    # Household who gifted this ... gift
+    household_id = db.Column(db.Integer, db.ForeignKey('household.id'))
+
+    # Description of the item(s).  You'll send one thank-you card for each gift record.
     description = db.Column(db.String)
+
+    # Other notes
     notes = db.Column(db.String)
 
     def to_dict(self):
         return {
-            "id":          self.id,
-            "event_id":    self.event_id,
-            "address_id":  self.family_id,
-            "description": self.description,
-            "notes":       self.notes
+            "id":           self.id,
+            "event_id":     self.event_id,
+            "household_id": self.household_id,
+            "description":  self.description,
+            "notes":        self.notes
         }
 
     def __repr__(self):
-        return f"Gift(id={self.id}, event={self.event_id}, fam={self.family_id}, " \
+        return f"Gift(id={self.id}, event={self.event_id}, hh={self.household_id}, " \
                f"description={self.description}, notes={self.notes}"
 
 
@@ -225,7 +232,7 @@ class Card(db.Model):
     was_card_sent = db.Column(db.Integer, default=0)
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
     gift_id = db.Column(db.Integer, db.ForeignKey('gift.id'))
-    family_id = db.Column(db.Integer, db.ForeignKey('family.id'))
+    household_id = db.Column(db.Integer, db.ForeignKey('household.id'))
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
 
     def to_dict(self):
@@ -234,10 +241,10 @@ class Card(db.Model):
             "was_card_sent": self.was_card_sent,
             "event_id":      self.event_id,
             "gift_id":       self.gift_id,
-            "family_id":     self.family_id,
+            "household_id":  self.household_id,
             "address_id":    self.address_id
         }
 
     def __repr__(self):
         return f"Card(id={self.id}, was_card_sent={self.was_card_sent}, event={self.event_id}, " \
-               f"gift={self.gift_id}, fam={self.family_id}, address={self.address_id}"
+               f"gift={self.gift_id}, hh={self.household_id}, address={self.address_id}"

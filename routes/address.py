@@ -21,7 +21,7 @@ class AddressCollectionApi(Resource):
     """
 
     @staticmethod
-    def get(self) -> json:
+    def get() -> json:
         """Return all addresses from the database"""
         logger.debug("Start of AddressCollectionAPI.GET")
         logger.debug(request)
@@ -109,7 +109,7 @@ class AddressApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("family_id", type=int, nullable=False, required=True)
+        parser.add_argument("household_id", type=int, nullable=False, required=True)
         parser.add_argument("line_1", type=str)
         parser.add_argument("line_2", type=str)
         parser.add_argument("city", type=str)
@@ -156,7 +156,7 @@ class AddressApi(Resource):
 
         # Define the parameters used by this endpoint
         parser.add_argument("address_id", type=int, nullable=False, store_missing=False)
-        parser.add_argument("family_id", type=int, nullable=False, required=True)
+        parser.add_argument("household_id", type=int, nullable=False, required=True)
         parser.add_argument("line_1", type=str)
         parser.add_argument("line_2", type=str)
         parser.add_argument("city", type=str)
@@ -175,7 +175,7 @@ class AddressApi(Resource):
             address = Address.query.get(args["address_id"])
 
             # Update this record with the provided data
-            address.family_id = args["family_id"]
+            address.household_id = args["household_id"]
             address.line_1 = args["line_1"]
             address.line_2 = args["line_2"]
             address.city = args["city"]

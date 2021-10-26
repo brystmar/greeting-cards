@@ -9,7 +9,7 @@ from flask_restful import Api
 from root_logger import logger  # Initialize the logger before doing anything else
 from backend import create_app
 from routes.address import AddressCollectionApi, AddressApi
-from routes.family import FamilyCollectionApi, FamilyApi
+from routes.household import HouseholdCollectionApi, HouseholdApi
 
 # Initialize the Flask app
 app = create_app()
@@ -19,8 +19,8 @@ api = Api(app)
 logger.info("Initialized the API for this Flask app")
 
 # Define the functional endpoints
-api.add_resource(FamilyApi, "/api/v1/family")
-api.add_resource(FamilyCollectionApi, "/api/v1/all_families")
+api.add_resource(HouseholdApi, "/api/v1/household")
+api.add_resource(HouseholdCollectionApi, "/api/v1/all_households")
 api.add_resource(AddressApi, "/api/v1/address")
 api.add_resource(AddressCollectionApi, "/api/v1/all_addresses")
 
