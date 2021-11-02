@@ -4,6 +4,7 @@ from os import path
 
 # Third-party packages
 from flask_restful import Api
+from flask_cors import CORS
 
 # App components
 from root_logger import logger  # Initialize the logger before doing anything else
@@ -13,6 +14,9 @@ from routes.household import HouseholdCollectionApi, HouseholdApi
 
 # Initialize the Flask app
 app = create_app()
+
+# Enable CORS for the app
+CORS(app, resources=r'/api/*')
 
 # Initialize the api for our app
 api = Api(app)

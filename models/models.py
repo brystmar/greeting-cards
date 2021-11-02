@@ -38,7 +38,7 @@ class Address(db.Model):
 
     # ...the `full_address` field!  For non-US addresses, the front end will copy/pasta
     #  this multi-line text blob as the mailing address
-    full_address = db.Column(db.BLOB)
+    full_address = db.Column(db.String)
 
     # Quick way to flag stale data, or for friends who move home temporarily
     is_current = db.Column(db.Integer, default=1)
