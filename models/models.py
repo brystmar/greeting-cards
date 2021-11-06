@@ -7,7 +7,8 @@ logger = getLogger()
 
 class Address(db.Model):
     """
-    Table to store address details for a household, which may have multiple addresses.
+    Table to store the mailing address for a specified household.
+    Each household may have multiple addresses.
     """
 
     # Set the name of this table
@@ -29,7 +30,7 @@ class Address(db.Model):
     city = db.Column(db.String)
 
     # Defining these as `state` & `zip` effectively pigeonholes the app as US-only, but
-    #  the holidays are coming soon and I need to solve for the 98% use case right now
+    # the holidays are coming soon and I need to solve for the 98% use case right now
     state = db.Column(db.String)
     zip = db.Column(db.String)
 
@@ -37,7 +38,7 @@ class Address(db.Model):
     country = db.Column(db.String, default="United States")
 
     # ...the `full_address` field!  For non-US addresses, the front end will copy/pasta
-    #  this multi-line text blob as the mailing address
+    # this multi-line text blob as the mailing address
     full_address = db.Column(db.String)
 
     # Quick way to flag stale data, or for friends who move home temporarily
@@ -92,8 +93,8 @@ class Address(db.Model):
 class Household(db.Model):
     """
     Table to store data about each household.
-    This schema is almost certainly not optimally efficient, but even worrying
-    about that is firmly out of scope.
+    This schema is certainly not optimally designed, but even the act of worrying
+    about that is firmly out of scope at this time.
     """
 
     # Set the name of this table
@@ -109,7 +110,7 @@ class Household(db.Model):
     first_names = db.Column(db.String)
 
     # Primary surname for this household.  Households with multiple surnames will be challenging
-    #  to implement; I'll find a better solution for this down the road.
+    # to implement; I'll find a better solution for this down the road.
     surname = db.Column(db.String)
 
     # When addressing a formal letter, how should this household be addressed?  Examples:
@@ -118,8 +119,8 @@ class Household(db.Model):
     #  Dave & Pat Johnson
     formal_name = db.Column(db.String)
 
-    # List: Immediate Household, Grandparents, Aunts & Uncles, Cousins, Childhood friends,
-    #  Family friends, Work friends, Colleagues, Neighbors, Acquaintances, etc.
+    # How do we know these people?  Immediate Household, Grandparents, Aunts & Uncles, Cousins,
+    # Childhood friends, Family friends, Work friends, Colleagues, Neighbors, Acquaintances, etc.
     relationship = db.Column(db.String)
 
     # Defines this household as either Friends or Family
@@ -128,7 +129,14 @@ class Household(db.Model):
     # For family relationships, did these originate from mine or from my spouse's side?
     family_side = db.Column(db.String)
 
-    # Additional notes about this household, such as the name of their kids or pets
+    # Names of children living in this household
+    # Good candidate for being broken out into its own table later, if the need arises
+    kids = db.Column(db.String)
+
+    # Do we want this household on our holiday/Christmas card list?
+    should_receive_holiday_card = db.Column(db.Boolean)
+
+    # Additional notes about this household
     notes = db.Column(db.String)
 
     # Easy SQLAlchemy backref for addresses which match this household
@@ -139,25 +147,32 @@ class Household(db.Model):
 
     def to_dict(self):
         return {
-            "id":                self.id,
-            "nickname":          self.nickname,
-            "first_names":       self.first_names,
-            "surname":           self.surname,
-            "formal_name":       self.formal_name,
-            "relationship":      self.relationship,
-            "relationship_type": self.relationship_type,
-            "family_side":       self.family_side,
-            "notes":             self.notes
+            "id":                          self.id,
+            "nickname":                    self.nickname,
+            "first_names":                 self.first_names,
+            "surname":                     self.surname,
+            "formal_name":                 self.formal_name,
+            "relationship":                self.relationship,
+            "relationship_type":           self.relationship_type,
+            "family_side":                 self.family_side,
+            "kids":                        self.kids,
+            "should_receive_holiday_card": self.should_receive_holiday_card,
+            "notes":                       self.notes
         }
 
     def __repr__(self):
         return f"Household(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
                f"surname={self.surname}, rel={self.relationship}, " \
                f"rel_type={self.relationship_type}, family_side={self.family_side}, " \
-               f"notes={self.notes}"
+               f"kids={self.kids}, notes={self.notes}, " \
+               f"should_receive_card={self.should_receive_holiday_card}"
 
 
 class Event(db.Model):
+    """
+    Table to store data about events that we'll want to send greeting (or thank you) cards for.
+    """
+
     # Set the name of this table
     __tablename__ = "event"
 
@@ -191,6 +206,10 @@ class Event(db.Model):
 
 
 class Gift(db.Model):
+    """
+    Table to store data about gifts received from a particular event.
+    """
+
     # Set the name of this table
     __tablename__ = "gift"
 
@@ -206,24 +225,39 @@ class Gift(db.Model):
     # Description of the item(s).  You'll send one thank-you card for each gift record.
     description = db.Column(db.String)
 
+    # Where the gift was purchased from, if known.
+    # We collected this data but probably don't care about it; will likely remove in the future
+    purchased_from = db.Column(db.String)
+
+    # Date the gift was received
+    # Another data point we collected but probably won't keep long-term
+    date = db.Column(db.DateTime)
+
     # Other notes
     notes = db.Column(db.String)
 
     def to_dict(self):
         return {
-            "id":           self.id,
-            "event_id":     self.event_id,
-            "household_id": self.household_id,
-            "description":  self.description,
-            "notes":        self.notes
+            "id":             self.id,
+            "event_id":       self.event_id,
+            "household_id":   self.household_id,
+            "description":    self.description,
+            "purchased_from": self.purchased_from,
+            "date":           self.date.strftime("%Y-%m-%d") if self.date else None,
+            "notes":          self.notes
         }
 
     def __repr__(self):
         return f"Gift(id={self.id}, event={self.event_id}, hh={self.household_id}, " \
-               f"description={self.description}, notes={self.notes}"
+               f"description={self.description}, purchased_from={self.purchased_from} " \
+               f"notes={self.notes}, date={self.date}"
 
 
 class Card(db.Model):
+    """
+    Table which stores relational data about cards sent for each event (and/or gift).
+    """
+
     # Set the name of this table
     __tablename__ = "card"
 

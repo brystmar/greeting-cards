@@ -1,6 +1,10 @@
-# Local database
+# Local data sources
 *.sqlite
+*.sqlite-journal
 *.sqlite3
+*.sqlite3-journal
+*.xls
+*.xlsx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
