@@ -243,9 +243,10 @@ class AddressApi(Resource):
                 return address.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.info(f"No record found for address_id={address_id}.")
+                error_msg = f"No record found for address_id={address_id}."
+                logger.info(error_msg)
                 logger.debug(f"End of AddressAPI.DELETE")
-                return f"No record found for address_id={address_id}.", 404
+                return error_msg, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No record found for address_id={address_id}.\n{e}"

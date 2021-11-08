@@ -135,7 +135,7 @@ class HouseholdApi(Resource):
             db.session.commit()
             logger.debug("Commit completed")
 
-            # Return the address_id to the requester
+            # Return the household_id to the requester
             logger.debug("End of HouseholdAPI.POST")
             return new_household.id, 201
 
@@ -215,7 +215,7 @@ class HouseholdApi(Resource):
             logger.debug(f"Household_id={household_id} was read successfully")
         except KeyError as e:
             logger.info(f"Error parsing household_id: no value was provided. {e}")
-            logger.debug(f"End of AddressAPI.DELETE")
+            logger.debug(f"End of HouseholdAPI.DELETE")
             return f"No value provided for household_id.", 400
 
         try:
@@ -236,9 +236,10 @@ class HouseholdApi(Resource):
                 return household.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No record found for household_id={household_id}.")
+                error_msg = f"No record found for household_id={household_id}."
+                logger.debug(error_msg)
                 logger.debug("End of HouseholdAPI.GET")
-                return f"No record found for household_id={household_id}.", 404
+                return error_msg, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No record found for household_id={household_id}.\n{e}"

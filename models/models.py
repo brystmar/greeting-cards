@@ -51,20 +51,6 @@ class Address(db.Model):
     created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
     last_modified = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        # Ensure each record has created and last_modified dates
-        if not self.created_date:
-            now = datetime.utcnow()
-            logger.debug(f"No created_date found for address_id={self.id}.  Setting to {now}.")
-            self.created_date = now
-            self.last_modified = now
-
-        # For apartment-dwellers, override the default value for is_likely_to_change
-        if self.line_2 and "is_likely_to_change" not in kwargs.keys():
-            self.is_likely_to_change = 1
-
     def to_dict(self):
         return {
             "id":                  self.id,
@@ -83,6 +69,20 @@ class Address(db.Model):
             "last_modified":       self.last_modified.strftime(
                 "%Y-%m-%d %H:%M:%M.%f") if self.last_modified else datetime.utcnow()
         }
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        # Ensure each record has created and last_modified dates
+        if not self.created_date:
+            now = datetime.utcnow()
+            logger.debug(f"No created_date found for address_id={self.id}.  Setting to {now}.")
+            self.created_date = now
+            self.last_modified = now
+
+        # For apartment-dwellers, override the default value for is_likely_to_change
+        if self.line_2 and "is_likely_to_change" not in kwargs.keys():
+            self.is_likely_to_change = 1
 
     def __repr__(self):
         return f"Addy(id={self.id}, hh={self.household_id}, L1={self.line_1}, L2={self.line_1}, " \
@@ -142,9 +142,6 @@ class Household(db.Model):
     # Easy SQLAlchemy backref for addresses which match this household
     addresses = db.relationship("Address", backref="household", lazy=True)
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def to_dict(self):
         return {
             "id":                          self.id,
@@ -159,6 +156,9 @@ class Household(db.Model):
             "should_receive_holiday_card": self.should_receive_holiday_card,
             "notes":                       self.notes
         }
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def __repr__(self):
         return f"Household(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
@@ -199,6 +199,9 @@ class Event(db.Model):
             "year":        self.year,
             "is_archived": self.is_archived
         }
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def __repr__(self):
         return f"Event(id={self.id}, name={self.name}, date={self.date}, year={self.year}, " \
@@ -246,6 +249,9 @@ class Gift(db.Model):
             "date":           self.date.strftime("%Y-%m-%d") if self.date else None,
             "notes":          self.notes
         }
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def __repr__(self):
         return f"Gift(id={self.id}, event={self.event_id}, hh={self.household_id}, " \
@@ -297,6 +303,9 @@ class Card(db.Model):
             "address_id":   self.address_id,
             "date_sent":    self.date_sent.strftime("%Y-%m-%d") if self.date_sent else None
         }
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def __repr__(self):
         return f"Card(id={self.id}, type={self.type}, status={self.status}, " \
