@@ -13,6 +13,7 @@ from routes.address import AddressCollectionApi, AddressApi
 from routes.household import HouseholdCollectionApi, HouseholdApi
 from routes.event import EventCollectionApi, EventApi
 from routes.gift import GiftCollectionApi, GiftApi
+from routes.card import CardCollectionApi, CardApi
 
 # Initialize the Flask app
 app = create_app()
@@ -33,6 +34,8 @@ api.add_resource(EventApi, "/api/v1/event")
 api.add_resource(EventCollectionApi, "/api/v1/all_events")
 api.add_resource(GiftApi, "/api/v1/gift")
 api.add_resource(GiftCollectionApi, "/api/v1/all_gifts")
+api.add_resource(CardApi, "/api/v1/card")
+api.add_resource(CardCollectionApi, "/api/v1/all_cards")
 
 # Define a global variable to indicate whether this app is running on the local machine
 is_running_locally = "pycharm" in path.abspath(path.dirname(__file__)).lower()
