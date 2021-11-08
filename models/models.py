@@ -100,7 +100,7 @@ class Household(db.Model):
     # Set the name of this table
     __tablename__ = "household"
 
-    # Unique identifier is a simple auto-increment integer handled by the db
+    # Unique identifier is a simple auto-increment integer
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
 
     # Human-friendly reference for a particular household
@@ -176,17 +176,17 @@ class Event(db.Model):
     # Set the name of this table
     __tablename__ = "event"
 
-    # Unique identifier is a simple auto-increment integer handled by the db
+    # Unique identifier is a simple auto-increment integer
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
 
     # Descriptive name of the event
     name = db.Column(db.String)
 
     # Date of the event, if applicable
-    date = db.Column(db.DateTime)
+    date = db.Column(db.Date)
 
     # For annual events like holiday cards, it makes more sense to only capture the event's year
-    year = db.Column(db.Integer, default=datetime.now().year)
+    year = db.Column(db.Integer, default=datetime.utcnow().year)
 
     # Events get archived once all greeting (or thank-you) cards are sent
     is_archived = db.Column(db.Integer, default=0)
@@ -213,7 +213,7 @@ class Gift(db.Model):
     # Set the name of this table
     __tablename__ = "gift"
 
-    # Unique identifier is a simple auto-increment integer handled by the db
+    # Unique identifier is a simple auto-increment integer
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
 
     # Event that the gift was from
@@ -231,7 +231,7 @@ class Gift(db.Model):
 
     # Date the gift was received
     # Another data point we collected but probably won't keep long-term
-    date = db.Column(db.DateTime)
+    date = db.Column(db.Date, index=True)
 
     # Other notes
     notes = db.Column(db.String)
@@ -261,24 +261,45 @@ class Card(db.Model):
     # Set the name of this table
     __tablename__ = "card"
 
-    # Unique identifier is a simple auto-increment integer handled by the db
+    # Unique identifier is a simple auto-increment integer
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
-    was_card_sent = db.Column(db.Integer, default=0)
+
+    # What type of card is this?  Options: Thank You, Holiday, Greeting, Other
+    type = db.Column(db.String)
+
+    # Defines the lifecycle status of this card: New --> Written --> Addressed --> Sent.
+    status = db.Column(db.String, default="New", nullable=False)
+
+    # Which event is this card being sent for?
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
+
+    # If this is a thank-you card, which gift is this card for?
     gift_id = db.Column(db.Integer, db.ForeignKey('gift.id'))
+
+    # Storing the hh_id for clarity, despite being able to reference it using the `gift_id` above
+    # Another reminder that getting to 1NF isn't important for this project :)
     household_id = db.Column(db.Integer, db.ForeignKey('household.id'))
+
+    # Indicates which address the card was intended for
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
+
+    # Stores the date
+    date_sent = db.Column(db.Date, index=True)
 
     def to_dict(self):
         return {
-            "id":            self.id,
-            "was_card_sent": self.was_card_sent,
-            "event_id":      self.event_id,
-            "gift_id":       self.gift_id,
-            "household_id":  self.household_id,
-            "address_id":    self.address_id
+            "id":           self.id,
+            "type":         self.type,
+            "status":       self.status,
+            "event_id":     self.event_id,
+            "gift_id":      self.gift_id,
+            "household_id": self.household_id,
+            "address_id":   self.address_id,
+            "date_sent":    self.date_sent.strftime("%Y-%m-%d") if self.date_sent else None
         }
 
     def __repr__(self):
-        return f"Card(id={self.id}, was_card_sent={self.was_card_sent}, event={self.event_id}, " \
-               f"gift={self.gift_id}, hh={self.household_id}, address={self.address_id}"
+        return f"Card(id={self.id}, type={self.type}, status={self.status}, " \
+               f"event={self.event_id}, gift={self.gift_id}, hh={self.household_id}, " \
+               f"address={self.address_id}, " \
+               f"date_sent={self.date_sent.strftime('%Y-%m-%d') if self.date_sent else None}"
