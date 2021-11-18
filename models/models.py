@@ -228,9 +228,9 @@ class Gift(db.Model):
     # Description of the item(s).  You'll send one thank-you card for each gift record.
     description = db.Column(db.String)
 
-    # Where the gift was purchased from, if known.
+    # Where the gift originated from (store where it was purchased, homemade, etc.), if known
     # We collected this data but probably don't care about it; will likely remove in the future
-    purchased_from = db.Column(db.String)
+    origin = db.Column(db.String)
 
     # Date the gift was received
     # Another data point we collected but probably won't keep long-term
@@ -241,13 +241,13 @@ class Gift(db.Model):
 
     def to_dict(self):
         return {
-            "id":             self.id,
-            "event_id":       self.event_id,
-            "household_id":   self.household_id,
-            "description":    self.description,
-            "purchased_from": self.purchased_from,
-            "date":           self.date.strftime("%Y-%m-%d") if self.date else None,
-            "notes":          self.notes
+            "id":           self.id,
+            "event_id":     self.event_id,
+            "household_id": self.household_id,
+            "description":  self.description,
+            "origin":       self.origin,
+            "date":         self.date.strftime("%Y-%m-%d") if self.date else None,
+            "notes":        self.notes
         }
 
     def __init__(self, **kwargs):
@@ -255,7 +255,7 @@ class Gift(db.Model):
 
     def __repr__(self):
         return f"Gift(id={self.id}, event={self.event_id}, hh={self.household_id}, " \
-               f"description={self.description}, purchased_from={self.purchased_from} " \
+               f"description={self.description}, origin={self.origin} " \
                f"notes={self.notes}, date={self.date}"
 
 

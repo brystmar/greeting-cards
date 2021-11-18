@@ -118,7 +118,7 @@ class GiftApi(Resource):
         parser.add_argument("event_id", type=int)
         parser.add_argument("household_id", type=int)
         parser.add_argument("description", type=str)
-        parser.add_argument("purchased_from", type=str)
+        parser.add_argument("origin", type=str)
         parser.add_argument("date", type=date)
         parser.add_argument("notes", type=str)
 
@@ -157,7 +157,7 @@ class GiftApi(Resource):
         parser.add_argument("event_id", type=int)
         parser.add_argument("household_id", type=int)
         parser.add_argument("description", type=str)
-        parser.add_argument("purchased_from", type=str)
+        parser.add_argument("origin", type=str)
         parser.add_argument("date", type=date)
         parser.add_argument("notes", type=str)
 
@@ -181,7 +181,7 @@ class GiftApi(Resource):
             gift.event_id = args["event_id"]
             gift.household_id = args["household_id"]
             gift.description = args["description"]
-            gift.purchased_from = args["purchased_from"]
+            gift.origin = args["origin"]
             gift.date = args["date"]
             gift.notes = args["notes"]
 
