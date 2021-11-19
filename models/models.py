@@ -228,6 +228,9 @@ class Gift(db.Model):
     # Description of the item(s).  You'll send one thank-you card for each gift record.
     description = db.Column(db.String)
 
+    # Basic category for this gift, i.e.: Book, Clothing, Toy
+    type = db.Column(db.String)
+
     # Where the gift originated from (store where it was purchased, homemade, etc.), if known
     # We collected this data but probably don't care about it; will likely remove in the future
     origin = db.Column(db.String)
@@ -245,6 +248,7 @@ class Gift(db.Model):
             "event_id":     self.event_id,
             "household_id": self.household_id,
             "description":  self.description,
+            "type":         self.type,
             "origin":       self.origin,
             "date":         self.date.strftime("%Y-%m-%d") if self.date else None,
             "notes":        self.notes
@@ -255,7 +259,7 @@ class Gift(db.Model):
 
     def __repr__(self):
         return f"Gift(id={self.id}, event={self.event_id}, hh={self.household_id}, " \
-               f"description={self.description}, origin={self.origin} " \
+               f"description={self.description}, origin={self.origin}, type={self.type}, " \
                f"notes={self.notes}, date={self.date}"
 
 
@@ -280,6 +284,7 @@ class Card(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
 
     # If this is a thank-you card, which gift is this card for?
+    # TODO: Must change to a 1-to-many relationship
     gift_id = db.Column(db.Integer, db.ForeignKey('gift.id'))
 
     # Storing the hh_id for clarity, despite being able to reference it using the `gift_id` above
