@@ -121,6 +121,7 @@ class GiftApi(Resource):
         parser.add_argument("type", type=str)
         parser.add_argument("origin", type=str)
         parser.add_argument("date", type=date)
+        parser.add_argument("should_a_card_be_sent", type=bool)
         parser.add_argument("notes", type=str)
 
         # Parse the arguments provided
@@ -161,6 +162,7 @@ class GiftApi(Resource):
         parser.add_argument("type", type=str)
         parser.add_argument("origin", type=str)
         parser.add_argument("date", type=date)
+        parser.add_argument("should_a_card_be_sent", type=bool)
         parser.add_argument("notes", type=str)
 
         # Parse the arguments provided
@@ -181,11 +183,12 @@ class GiftApi(Resource):
 
             # Update this record with the provided data
             gift.event_id = args["event_id"]
-            gift.household_id = args["household_id"]
+            gift.households = args["households"]
             gift.description = args["description"]
             gift.origin = args["type"]
             gift.origin = args["origin"]
             gift.date = args["date"]
+            gift.date = args["should_a_card_be_sent"]
             gift.notes = args["notes"]
 
             # Commit these changes to the db

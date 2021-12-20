@@ -133,6 +133,9 @@ class Household(db.Model):
     # Good candidate for being broken out into its own table later, if the need arises
     kids = db.Column(db.String)
 
+    # Pets are important household members too!
+    pets = db.Column(db.String)
+
     # Do we want this household on our holiday/Christmas card list?
     should_receive_holiday_card = db.Column(db.Boolean)
 
@@ -153,6 +156,7 @@ class Household(db.Model):
             "relationship_type":           self.relationship_type,
             "family_side":                 self.family_side,
             "kids":                        self.kids,
+            "pets":                        self.pets,
             "should_receive_holiday_card": self.should_receive_holiday_card,
             "notes":                       self.notes
         }
@@ -164,7 +168,7 @@ class Household(db.Model):
         return f"Household(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
                f"surname={self.surname}, rel={self.relationship}, " \
                f"rel_type={self.relationship_type}, family_side={self.family_side}, " \
-               f"kids={self.kids}, notes={self.notes}, " \
+               f"kids={self.kids}, pets={self.pets}, notes={self.notes}, " \
                f"should_receive_card={self.should_receive_holiday_card}"
 
 
@@ -222,8 +226,9 @@ class Gift(db.Model):
     # Event that the gift was from
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
 
-    # Household who gifted this ... gift
-    household_id = db.Column(db.Integer, db.ForeignKey('household.id'))
+    # List of households who contributed to this gift
+    # households = db.Column(db.ARRAY)
+    households = db.Column(db.Integer)
 
     # Description of the item(s).  You'll send one thank-you card for each gift record.
     description = db.Column(db.String)
@@ -239,28 +244,33 @@ class Gift(db.Model):
     # Another data point we collected but probably won't keep long-term
     date = db.Column(db.Date, index=True)
 
+    # Some friends & family ask you not to send a thank-you card
+    should_a_card_be_sent = db.Column(db.Boolean, default=True)
+    # TODO: Update all boolean db values to string?
+
     # Other notes
     notes = db.Column(db.String)
 
     def to_dict(self):
         return {
-            "id":           self.id,
-            "event_id":     self.event_id,
-            "household_id": self.household_id,
-            "description":  self.description,
-            "type":         self.type,
-            "origin":       self.origin,
-            "date":         self.date.strftime("%Y-%m-%d") if self.date else None,
-            "notes":        self.notes
+            "id":                    self.id,
+            "event_id":              self.event_id,
+            "households":            self.households,
+            "description":           self.description,
+            "type":                  self.type,
+            "origin":                self.origin,
+            "date":                  self.date.strftime("%Y-%m-%d") if self.date else None,
+            "should_a_card_be_sent": self.should_a_card_be_sent,
+            "notes":                 self.notes
         }
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def __repr__(self):
-        return f"Gift(id={self.id}, event={self.event_id}, hh={self.household_id}, " \
+        return f"Gift(id={self.id}, event={self.event_id}, hhs={self.households}, " \
                f"description={self.description}, origin={self.origin}, type={self.type}, " \
-               f"notes={self.notes}, date={self.date}"
+               f"date={self.date}, card?={self.should_a_card_be_sent}, notes={self.notes}"
 
 
 class Card(db.Model):
@@ -279,9 +289,6 @@ class Card(db.Model):
 
     # Defines the lifecycle status of this card: New --> Written --> Addressed --> Sent.
     status = db.Column(db.String, default="New", nullable=False)
-
-    # Which event is this card being sent for?
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
 
     # If this is a thank-you card, which gift is this card for?
     # TODO: Must change to a 1-to-many relationship

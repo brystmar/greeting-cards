@@ -14,12 +14,15 @@ class Config(object):
         logger.debug("Applying variables from local .env file")
         from env_tools import apply_env
         apply_env()
-        logger.debug("Local .env variables applied")
+        logger.info("Local .env variables applied")
 
     # App-related variables
     APP_NAME = "greeting-cards"
     BOUND_PORT = 5000
     SECRET_KEY = environ.get("SECRET_KEY") or "wyKx4azY2YQ?R4J257fi@LkNVCBmkZgR1gwFWs!whsQ2V3YB"
+    WHITELISTED_ORIGIN = environ.get('WHITELISTED_ORIGIN')
+    WHITELISTED_ORIGINS = environ.get('WHITELISTED_ORIGINS')
+    # TODO: Determine which variable is actually needed
 
     # Database
     SQLALCHEMY_DATABASE_URI = environ.get("SQLALCHEMY_DATABASE_URI")

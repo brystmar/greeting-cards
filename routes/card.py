@@ -198,7 +198,7 @@ class CardApi(Resource):
             card.status = args["status"]
             card.event_id = args["event_id"]
             card.gift_id = args["gift_id"]
-            card.household_id = args["household_id"]
+            card.households = args["households"]
             card.address_id = args["address_id"]
             card.date_sent = args["date_sent"]
 

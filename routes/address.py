@@ -175,7 +175,7 @@ class AddressApi(Resource):
             address = Address.query.get(args["address_id"])
 
             # Update this record with the provided data
-            address.household_id = args["household_id"]
+            address.households = args["households"]
             address.line_1 = args["line_1"]
             address.line_2 = args["line_2"]
             address.city = args["city"]

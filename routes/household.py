@@ -80,7 +80,7 @@ class HouseholdApi(Resource):
 
         # Validate that a household_id was provided
         try:
-            household_id = args["household_id"]
+            household_id = args["households"]
             logger.debug(f"Household_id={household_id} was read successfully")
         except KeyError as e:
             logger.info(f"Error parsing household_id: no value was provided. {e}")
@@ -164,7 +164,7 @@ class HouseholdApi(Resource):
 
         # Validate that a household_id was provided
         try:
-            household_id = args["household_id"]
+            household_id = args["households"]
             logger.debug(f"Household_id={household_id} was read successfully")
         except KeyError as e:
             logger.info(f"Error parsing household_id: no value was provided. {e}")
@@ -211,7 +211,7 @@ class HouseholdApi(Resource):
 
         # Validate that a household_id was provided
         try:
-            household_id = args["household_id"]
+            household_id = args["households"]
             logger.debug(f"Household_id={household_id} was read successfully")
         except KeyError as e:
             logger.info(f"Error parsing household_id: no value was provided. {e}")
