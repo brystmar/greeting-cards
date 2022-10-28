@@ -5,7 +5,6 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
 logger = getLogger()
-db = SQLAlchemy()
 
 
 def create_app(config_class=Config) -> Flask:
@@ -24,7 +23,8 @@ def create_app(config_class=Config) -> Flask:
     app.logger.setLevel(DEBUG)
     app.logger.info("Initialized logger for this Flask app")
 
-    # Attach our database to the app
-    db.init_app(app)
+    # Initialize our database and attach it to the app
+    db = SQLAlchemy(app)
+    logger.info(f"Initialized the database {db.__repr__()}, attached it to the Flask app.")
 
     return app

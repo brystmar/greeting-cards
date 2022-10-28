@@ -131,6 +131,7 @@ class HouseholdApi(Resource):
         parser = reqparse.RequestParser(trim=True)
 
         # Define the parameters used by this endpoint
+        parser.add_argument("id", type=int, location='form')
         parser.add_argument("nickname", type=str, location='form')
         parser.add_argument("first_names", type=str, location='form')
         parser.add_argument("surname", type=str, location='form')
@@ -140,7 +141,7 @@ class HouseholdApi(Resource):
         parser.add_argument("family_side", type=str, location='form')
         parser.add_argument("kids", type=str, location='form')
         parser.add_argument("pets", type=str, location='form')
-        parser.add_argument("should_receive_holiday_card", type=int, location='form')
+        parser.add_argument("should_receive_holiday_card", default=0, location='form')
         parser.add_argument("notes", type=str, location='form')
 
         logger.debug(f"Parser init: {parser.__str__()}")

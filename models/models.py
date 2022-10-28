@@ -86,17 +86,23 @@ class Address(db.Model):
             self.is_likely_to_change = 1
 
         # Ensure is_current has a binary `int` value
-        if self.is_current not in (0, 1):
-            self.is_current = strtobool(str(self.is_current))
+        if self.is_current:
+            if self.is_current not in (0, 1):
+                self.is_current = strtobool(str(self.is_current))
+        else:
+            self.is_current = 1
 
         # Ensure is_likely_to_change has a binary `int` value
-        if self.is_likely_to_change not in (0, 1):
-            self.is_likely_to_change = strtobool(str(self.is_likely_to_change))
+        if self.is_likely_to_change:
+            if self.is_likely_to_change not in (0, 1):
+                self.is_likely_to_change = strtobool(str(self.is_likely_to_change))
+        else:
+            self.is_likely_to_change = 0
 
     def __repr__(self):
         return f"Addy(id={self.id}, hh={self.household_id}, L1={self.line_1}, L2={self.line_1}, " \
                f"city={self.city}, state={self.state}, zip={self.zip}, country={self.country}, " \
-               f"full_addy={self.full_address}, is_current={self.is_current}"
+               f"full_addy={self.full_address}, is_current={self.is_current})"
 
 
 class Household(db.Model):
@@ -174,15 +180,18 @@ class Household(db.Model):
         super().__init__(**kwargs)
 
         # Ensure should_receive_holiday_card has a binary `int` value
-        if self.should_receive_holiday_card not in (0, 1):
-            self.should_receive_holiday_card = strtobool(str(self.should_receive_holiday_card))
+        if self.should_receive_holiday_card:
+            if self.should_receive_holiday_card not in (0, 1):
+                self.should_receive_holiday_card = strtobool(str(self.should_receive_holiday_card))
+        else:
+            self.should_receive_holiday_card = 0
 
     def __repr__(self):
         return f"Household(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
                f"surname={self.surname}, rel={self.relationship}, " \
                f"rel_type={self.relationship_type}, family_side={self.family_side}, " \
                f"kids={self.kids}, pets={self.pets}, notes={self.notes}, " \
-               f"should_receive_card={self.should_receive_holiday_card}"
+               f"should_receive_card={self.should_receive_holiday_card})"
 
 
 class Event(db.Model):
@@ -221,12 +230,15 @@ class Event(db.Model):
         super().__init__(**kwargs)
 
         # Ensure is_archived has a binary `int` value
-        if self.is_archived not in (0, 1):
-            self.is_archived = strtobool(str(self.is_archived))
+        if self.is_archived:
+            if self.is_archived not in (0, 1):
+                self.is_archived = strtobool(str(self.is_archived))
+        else:
+            self.is_archived = 0
 
     def __repr__(self):
         return f"Event(id={self.id}, name={self.name}, date={self.date}, year={self.year}, " \
-               f"is_archived={self.is_archived}"
+               f"is_archived={self.is_archived})"
 
 
 class Gift(db.Model):
@@ -262,8 +274,8 @@ class Gift(db.Model):
     date = db.Column(db.Date, index=True)
 
     # Some friends & family ask you not to send a thank-you card
-    should_a_card_be_sent = db.Column(db.Integer, default=True)
     # TODO: Update all boolean db values to string?
+    should_a_card_be_sent = db.Column(db.Integer, default=1)
 
     # Other notes
     notes = db.Column(db.String)
@@ -285,13 +297,16 @@ class Gift(db.Model):
         super().__init__(**kwargs)
 
         # Ensure should_a_card_be_sent has a binary `int` value
-        if self.should_a_card_be_sent not in (0, 1):
-            self.should_a_card_be_sent = strtobool(str(self.should_a_card_be_sent))
+        if self.should_a_card_be_sent:
+            if self.should_a_card_be_sent not in (0, 1):
+                self.should_a_card_be_sent = strtobool(str(self.should_a_card_be_sent))
+        else:
+            self.should_a_card_be_sent = 1
 
     def __repr__(self):
         return f"Gift(id={self.id}, event={self.event_id}, hhs={self.households}, " \
                f"description={self.description}, origin={self.origin}, type={self.type}, " \
-               f"date={self.date}, card?={self.should_a_card_be_sent}, notes={self.notes}"
+               f"date={self.date}, card?={self.should_a_card_be_sent}, notes={self.notes})"
 
 
 class Card(db.Model):
@@ -344,4 +359,4 @@ class Card(db.Model):
         return f"Card(id={self.id}, type={self.type}, status={self.status}, " \
                f"event={self.event_id}, gift={self.gift_id}, hh={self.household_id}, " \
                f"address={self.address_id}, " \
-               f"date_sent={self.date_sent.strftime('%Y-%m-%d') if self.date_sent else None}"
+               f"date_sent={self.date_sent.strftime('%Y-%m-%d') if self.date_sent else None})"
