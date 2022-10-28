@@ -1,6 +1,7 @@
 from logging import getLogger
 from datetime import datetime
 from backend import db
+from distutils.util import strtobool
 
 logger = getLogger()
 
@@ -41,7 +42,7 @@ class Address(db.Model):
     # this multi-line text blob as the mailing address
     full_address = db.Column(db.String)
 
-    # Quick way to flag stale data, or for friends who move home temporarily
+    # Quick way to flag stale data, or for friends who move to a temporary spot
     is_current = db.Column(db.Integer, default=1)
 
     # All apartment addresses will default to 1 (True)
@@ -83,6 +84,14 @@ class Address(db.Model):
         # For apartment-dwellers, override the default value for is_likely_to_change
         if self.line_2 and "is_likely_to_change" not in kwargs.keys():
             self.is_likely_to_change = 1
+
+        # Ensure is_current has a binary `int` value
+        if self.is_current not in (0, 1):
+            self.is_current = strtobool(str(self.is_current))
+
+        # Ensure is_likely_to_change has a binary `int` value
+        if self.is_likely_to_change not in (0, 1):
+            self.is_likely_to_change = strtobool(str(self.is_likely_to_change))
 
     def __repr__(self):
         return f"Addy(id={self.id}, hh={self.household_id}, L1={self.line_1}, L2={self.line_1}, " \
@@ -136,8 +145,8 @@ class Household(db.Model):
     # Pets are important household members too!
     pets = db.Column(db.String)
 
-    # Do we want this household on our holiday/Christmas card list?
-    should_receive_holiday_card = db.Column(db.Boolean)
+    # Do we want this household on our holiday/Christmas card list?  0 = False, 1 = True
+    should_receive_holiday_card = db.Column(db.Integer, default=0)
 
     # Additional notes about this household
     notes = db.Column(db.String)
@@ -163,6 +172,10 @@ class Household(db.Model):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        # Ensure should_receive_holiday_card has a binary `int` value
+        if self.should_receive_holiday_card not in (0, 1):
+            self.should_receive_holiday_card = strtobool(str(self.should_receive_holiday_card))
 
     def __repr__(self):
         return f"Household(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
@@ -207,6 +220,10 @@ class Event(db.Model):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        # Ensure is_archived has a binary `int` value
+        if self.is_archived not in (0, 1):
+            self.is_archived = strtobool(str(self.is_archived))
+
     def __repr__(self):
         return f"Event(id={self.id}, name={self.name}, date={self.date}, year={self.year}, " \
                f"is_archived={self.is_archived}"
@@ -245,7 +262,7 @@ class Gift(db.Model):
     date = db.Column(db.Date, index=True)
 
     # Some friends & family ask you not to send a thank-you card
-    should_a_card_be_sent = db.Column(db.Boolean, default=True)
+    should_a_card_be_sent = db.Column(db.Integer, default=True)
     # TODO: Update all boolean db values to string?
 
     # Other notes
@@ -266,6 +283,10 @@ class Gift(db.Model):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        # Ensure should_a_card_be_sent has a binary `int` value
+        if self.should_a_card_be_sent not in (0, 1):
+            self.should_a_card_be_sent = strtobool(str(self.should_a_card_be_sent))
 
     def __repr__(self):
         return f"Gift(id={self.id}, event={self.event_id}, hhs={self.households}, " \
