@@ -131,8 +131,7 @@ class HouseholdApi(Resource):
         parser = reqparse.RequestParser(trim=True)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("id", type=int, location='form')
-        parser.add_argument("nickname", type=str, location='form')
+        parser.add_argument("nickname", type=str, location='form', required=True)
         parser.add_argument("first_names", type=str, location='form')
         parser.add_argument("surname", type=str, location='form')
         parser.add_argument("formal_name", type=str, location='form')
@@ -146,27 +145,29 @@ class HouseholdApi(Resource):
 
         logger.debug(f"Parser init: {parser.__str__()}")
 
-        # Parse the arguments provided
-        args = parser.parse_args()
+        try:
+            # Parse the arguments provided
+            args = parser.parse_args()
 
-        logger.debug(f"should receive? {args.should_receive_holiday_card}")
-        # logger.debug(f"Args parsed successfully: {args.__str__()}")
-        logger.debug(f"Args parsed successfully: {args}")
+            logger.debug(f"should receive? {args.should_receive_holiday_card}")
+            # logger.debug(f"Args parsed successfully: {args.__str__()}")
+            logger.debug(f"Args parsed successfully: {args}")
 
-        logger.debug(f"Args str: {args.__str__()}")
+            logger.debug(f"Args str: {args.__str__()}")
+        except BaseException as e:
+            logger.debug(f"Error attempting to parse the args: {e}")
+            return e, 400
 
         # Create a new Household record using the provided data
         try:
             logger.debug(f"Attempting to create a Household from the args.")
-            empty_hh = Household()
-            logger.debug(f"emptyHH: {empty_hh}")
-            logger.debug(f"emptyHH to_dict: {empty_hh.to_dict()}")
             new_household = Household(**args)
+            db.session.add(new_household)
             logger.info(f"New record successfully created: {new_household.to_dict()}")
 
             # Commit this new record so the db generates an id
             logger.debug("Attempting to commit data")
-            # db.session.commit()
+            db.session.commit()
             logger.debug("Commit completed")
 
             # Return the household_id to the requester
@@ -249,29 +250,29 @@ class HouseholdApi(Resource):
 
         # Define the parameters used by this endpoint
         parser.add_argument("id", type=int, nullable=False, store_missing=False,
-                            required=True)
+                            required=True, location='form')
 
         # Parse the provided arguments
         args = parser.parse_args()
-        logger.debug(f"Args parsed successfully: {args.__str__()}")
+        logger.debug(f"Args parsed: {args.__str__()}")
 
-        # Validate that a household_id was provided
+        # Validate that a household id was provided
         try:
-            household_id = args["households"]
-            logger.debug(f"Household_id={household_id} was read successfully")
+            household_id = args["id"]
+            logger.debug(f"Household id={household_id} was provided.")
         except KeyError as e:
-            logger.info(f"Error parsing household_id: no value was provided. {e}")
+            logger.info(f"Missing household id. {e}")
             logger.debug(f"End of HouseholdAPI.DELETE")
-            return f"No value provided for household_id.", 400
+            return f"Missing household id. {e}", 400
 
         try:
             # Retrieve the selected record
-            household = Household.query.get(household_id)
+            household_to_delete = Household.query.get(household_id)
 
-            if household:
+            if household_to_delete:
                 # Record successfully returned from the db
                 logger.debug(f"Household record found.  Attempting to delete it.")
-                household.delete()
+                db.session.delete(household_to_delete)
 
                 logger.debug("About to commit this delete to the db.")
                 db.session.commit()
@@ -279,7 +280,7 @@ class HouseholdApi(Resource):
                 logger.info("Household record successfully deleted.")
 
                 logger.debug("End of HouseholdAPI.GET")
-                return household.to_dict(), 200
+                return f"Successfully deleted household id: {household_id}", 200
             else:
                 # No record with this id exists in the db
                 error_msg = f"No household found with id={household_id}."
