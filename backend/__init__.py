@@ -16,6 +16,7 @@ def create_app(config_class=Config) -> Flask:
     logger.info(f"Initialized Flask app: {app.name}")
 
     # Apply our config parameters to the app
+    app.instance_path = 'instance'
     app.config.from_object(config_class)
     logger.debug("App config applied")
 
