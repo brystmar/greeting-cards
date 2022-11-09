@@ -1,7 +1,12 @@
+"""
+Defines the data models of the database tables.
+"""
+
 from logging import getLogger
 from datetime import datetime
 from backend import db
 from distutils.util import strtobool
+# from marshmallow import Schema, fields
 
 logger = getLogger()
 
@@ -104,6 +109,26 @@ class Address(db.Model):
                f"city={self.city}, state={self.state}, zip={self.zip}, country={self.country}, " \
                f"full_addy={self.full_address}, is_current={self.is_current})"
 
+
+# class AddressSchema(Schema):
+#     """
+#     Schema for the marshmallow serializer
+#     """
+#
+#     id = fields.Integer()
+#     household_id = fields.Integer()
+#     line_1 = fields.String()
+#     line_2 = fields.String()
+#     city = fields.String()
+#     state = fields.String()
+#     zip = fields.String()
+#     country = fields.String()
+#     full_address = fields.String()
+#     is_current = fields.Boolean()
+#     is_likely_to_change = fields.Boolean()
+#     created_date = fields.DateTime()
+#     last_modified = fields.DateTime()
+#
 
 class Household(db.Model):
     """
