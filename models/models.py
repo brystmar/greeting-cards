@@ -386,9 +386,6 @@ class Picklists(db.Model):
     # Version is the primary key
     version = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
 
-    # Is this the version to use by default?
-    is_default = db.Column(db.String, default="False")
-
     # Household picklists
     household_relationship = db.Column(db.String)
     household_relationship_type = db.Column(db.String)
@@ -407,7 +404,6 @@ class Picklists(db.Model):
     def to_dict(self):
         return {
             "version":                     self.version,
-            "is_default":                  convert_to_bool(self.is_default),
             "household_relationship":      self.household_relationship.split(","),
             "household_relationship_type": self.household_relationship_type.split(","),
             "household_family_side":       self.household_family_side.split(","),
@@ -416,7 +412,7 @@ class Picklists(db.Model):
         }
 
     def __repr__(self):
-        return f"PicklistValues(version: {self.version}, is_default: {self.is_default} \n" \
+        return f"PicklistValues(version: {self.version} \n" \
                f"\thh_relationship: {self.household_relationship} \n" \
                f"\thh_relationship_type: {self.household_relationship_type} \n" \
                f"\thh_family_side: {self.household_family_side} \n" \

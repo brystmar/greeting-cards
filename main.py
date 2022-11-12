@@ -26,6 +26,7 @@ from routes.household import HouseholdCollectionApi, HouseholdApi
 from routes.event import EventCollectionApi, EventApi
 from routes.gift import GiftCollectionApi, GiftApi
 from routes.card import CardCollectionApi, CardApi
+from routes.picklists import PicklistValuesApi
 
 # Enable CORS logging
 # getLogger('flask_cors').level = DEBUG
@@ -50,6 +51,7 @@ api.add_resource(GiftApi, "/api/v1/gift")
 api.add_resource(GiftCollectionApi, "/api/v1/all_gifts")
 api.add_resource(CardApi, "/api/v1/card")
 api.add_resource(CardCollectionApi, "/api/v1/all_cards")
+api.add_resource(PicklistValuesApi, "/api/v1/picklist_values")
 logger.debug("Functional endpoints added")
 
 if __name__ == "__main__" and is_running_locally:
