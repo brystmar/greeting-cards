@@ -5,8 +5,7 @@ Defines the data models of the database tables.
 from logging import getLogger
 from datetime import datetime
 from backend import db
-from distutils.util import strtobool
-# from marshmallow import Schema, fields
+from helpers.helpers import convert_to_bool
 
 logger = getLogger()
 
@@ -57,6 +56,9 @@ class Address(db.Model):
     created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
     last_modified = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
 
+    # Additional context about this particular address
+    notes = db.Column(db.String)
+
     def to_dict(self):
         return {
             "id":                  self.id,
@@ -68,12 +70,13 @@ class Address(db.Model):
             "zip":                 self.zip,
             "country":             self.country,
             "full_address":        self.full_address,
-            "is_current":          self.is_current,
-            "is_likely_to_change": self.is_likely_to_change,
+            "is_current":          convert_to_bool(self.is_current),
+            "is_likely_to_change": convert_to_bool(self.is_likely_to_change),
             "created_date":        self.created_date.strftime(
                 "%Y-%m-%d %H:%M:%M.%f") if self.created_date else datetime.utcnow(),
             "last_modified":       self.last_modified.strftime(
-                "%Y-%m-%d %H:%M:%M.%f") if self.last_modified else datetime.utcnow()
+                "%Y-%m-%d %H:%M:%M.%f") if self.last_modified else datetime.utcnow(),
+            "notes":               self.notes
         }
 
     def __init__(self, **kwargs):
@@ -88,26 +91,18 @@ class Address(db.Model):
 
         # For apartment-dwellers, override the default value for is_likely_to_change
         if self.line_2 and "is_likely_to_change" not in kwargs.keys():
-            self.is_likely_to_change = 1
+            self.is_likely_to_change = True
 
-        # Ensure is_current has a binary `int` value
-        if self.is_current:
-            if self.is_current not in (0, 1):
-                self.is_current = strtobool(str(self.is_current))
-        else:
-            self.is_current = 1
-
-        # Ensure is_likely_to_change has a binary `int` value
-        if self.is_likely_to_change:
-            if self.is_likely_to_change not in (0, 1):
-                self.is_likely_to_change = strtobool(str(self.is_likely_to_change))
-        else:
-            self.is_likely_to_change = 0
+        # Convert the provided values for is_current and is_likely_to_change to boolean
+        self.is_current = convert_to_bool(self.is_current)
+        self.is_likely_to_change = convert_to_bool(self.is_likely_to_change)
 
     def __repr__(self):
         return f"Addy(id={self.id}, hh={self.household_id}, L1={self.line_1}, L2={self.line_1}, " \
                f"city={self.city}, state={self.state}, zip={self.zip}, country={self.country}, " \
-               f"full_addy={self.full_address}, is_current={self.is_current})"
+               f"full_addy={self.full_address}, is_current={self.is_current}, " \
+               f"is_likely_to_change={self.is_likely_to_change}, " \
+               f"created_date={self.created_date}, last_modified={self.last_modified})"
 
 
 # class AddressSchema(Schema):
@@ -145,7 +140,8 @@ class Household(db.Model):
 
     # Human-friendly reference for a particular household
     #  Setting a default helps for debugging since uniqueness is enforced
-    nickname = db.Column(db.String, unique=True, required=True, default=f"TBD {datetime.utcnow()}")
+    nickname = db.Column(db.String, unique=True, required=True, index=True,
+                         default=f"An unknown {datetime.utcnow()}")
 
     # First names of the heads of household
     first_names = db.Column(db.String)
@@ -180,7 +176,11 @@ class Household(db.Model):
     # Do we want this household on our holiday/Christmas card list?  0 = False, 1 = True
     should_receive_holiday_card = db.Column(db.String, default="False")
 
-    # Additional notes about this household
+    # Storing basic metadata is helpful
+    created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
+    last_modified = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
+
+    # Additional context about this household
     notes = db.Column(db.String)
 
     # Easy SQLAlchemy backref for addresses which match this household
@@ -198,26 +198,34 @@ class Household(db.Model):
             "family_side":                 self.family_side,
             "kids":                        self.kids,
             "pets":                        self.pets,
-            "should_receive_holiday_card": self.should_receive_holiday_card,
+            "should_receive_holiday_card": convert_to_bool(self.should_receive_holiday_card),
+            "created_date":                self.created_date.strftime(
+                "%Y-%m-%d %H:%M:%M.%f") if self.created_date else datetime.utcnow(),
+            "last_modified":               self.last_modified.strftime(
+                "%Y-%m-%d %H:%M:%M.%f") if self.last_modified else datetime.utcnow(),
             "notes":                       self.notes
         }
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # Ensure should_receive_holiday_card has a binary `int` value
-        if self.should_receive_holiday_card:
-            if self.should_receive_holiday_card not in (0, 1):
-                self.should_receive_holiday_card = strtobool(str(self.should_receive_holiday_card))
-        else:
-            self.should_receive_holiday_card = 0
+        # Ensure each record has created and last_modified dates
+        if not self.created_date:
+            now = datetime.utcnow()
+            logger.debug(f"No created_date found for address_id={self.id}.  Setting to {now}.")
+            self.created_date = now
+            self.last_modified = now
+
+        # Convert the provided value for should_receive_holiday_card to boolean
+        self.should_receive_holiday_card = convert_to_bool(self.should_receive_holiday_card)
 
     def __repr__(self):
         return f"Household(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
                f"surname={self.surname}, rel={self.relationship}, " \
                f"rel_type={self.relationship_type}, family_side={self.family_side}, " \
                f"kids={self.kids}, pets={self.pets}, notes={self.notes}, " \
-               f"should_receive_card={self.should_receive_holiday_card})"
+               f"should_receive_card={self.should_receive_holiday_card}, " \
+               f"created_date={self.created_date}, last_modified={self.last_modified})"
 
 
 class Event(db.Model):
@@ -243,28 +251,28 @@ class Event(db.Model):
     # Events get archived once all greeting (or thank-you) cards are sent
     is_archived = db.Column(db.Integer, default=0)
 
+    # Additional context about this event
+    notes = db.Column(db.String)
+
     def to_dict(self):
         return {
             "id":          self.id,
             "name":        self.name,
             "date":        self.date.strftime("%Y-%m-%d") if self.date else None,
             "year":        self.year,
-            "is_archived": self.is_archived
+            "is_archived": convert_to_bool(self.is_archived),
+            "notes":       self.notes
         }
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # Ensure is_archived has a binary `int` value
-        if self.is_archived:
-            if self.is_archived not in (0, 1):
-                self.is_archived = strtobool(str(self.is_archived))
-        else:
-            self.is_archived = 0
+        # Convert the provided value for is_archived to boolean
+        self.is_archived = convert_to_bool(self.is_archived)
 
     def __repr__(self):
         return f"Event(id={self.id}, name={self.name}, date={self.date}, year={self.year}, " \
-               f"is_archived={self.is_archived})"
+               f"is_archived={self.is_archived}, notes={self.notes})"
 
 
 class Gift(db.Model):
@@ -303,7 +311,7 @@ class Gift(db.Model):
     # TODO: Update all boolean db values to string?
     should_a_card_be_sent = db.Column(db.Integer, default=1)
 
-    # Other notes
+    # Additional context about this gift
     notes = db.Column(db.String)
 
     def to_dict(self):
@@ -322,12 +330,8 @@ class Gift(db.Model):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # Ensure should_a_card_be_sent has a binary `int` value
-        if self.should_a_card_be_sent:
-            if self.should_a_card_be_sent not in (0, 1):
-                self.should_a_card_be_sent = strtobool(str(self.should_a_card_be_sent))
-        else:
-            self.should_a_card_be_sent = 1
+        # Convert the provided value for should_a_card_be_sent to boolean
+        self.should_a_card_be_sent = convert_to_bool(self.should_a_card_be_sent)
 
     def __repr__(self):
         return f"Gift(id={self.id}, event={self.event_id}, hhs={self.households}, " \
@@ -353,7 +357,7 @@ class Card(db.Model):
     status = db.Column(db.String, default="New", nullable=False)
 
     # If this is a thank-you card, which gift is this card for?
-    # TODO: Must change to a 1-to-many relationship
+    # TODO: Change to a 1-to-many relationship
     gift_id = db.Column(db.Integer, db.ForeignKey('gift.id'))
 
     # Storing the hh_id for clarity, despite being able to reference it using the `gift_id` above
@@ -366,6 +370,9 @@ class Card(db.Model):
     # Stores the date
     date_sent = db.Column(db.Date, index=True)
 
+    # Additional context about this card
+    notes = db.Column(db.String)
+
     def to_dict(self):
         return {
             "id":           self.id,
@@ -375,7 +382,8 @@ class Card(db.Model):
             "gift_id":      self.gift_id,
             "household_id": self.household_id,
             "address_id":   self.address_id,
-            "date_sent":    self.date_sent.strftime("%Y-%m-%d") if self.date_sent else None
+            "date_sent":    self.date_sent.strftime("%Y-%m-%d") if self.date_sent else None,
+            "notes":        self.notes
         }
 
     def __init__(self, **kwargs):
@@ -385,4 +393,5 @@ class Card(db.Model):
         return f"Card(id={self.id}, type={self.type}, status={self.status}, " \
                f"event={self.event_id}, gift={self.gift_id}, hh={self.household_id}, " \
                f"address={self.address_id}, " \
-               f"date_sent={self.date_sent.strftime('%Y-%m-%d') if self.date_sent else None})"
+               f"date_sent={self.date_sent.strftime('%Y-%m-%d') if self.date_sent else None}, " \
+               f"notes={self.notes})"
