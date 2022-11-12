@@ -47,10 +47,10 @@ class Address(db.Model):
     full_address = db.Column(db.String)
 
     # Quick way to flag stale data, or for friends who move to a temporary spot
-    is_current = db.Column(db.Integer, default=1)
+    is_current = db.Column(db.String, default="True")
 
-    # All apartment addresses will default to 1 (True)
-    is_likely_to_change = db.Column(db.Integer, default=0)
+    # All apartment addresses will default to True
+    is_likely_to_change = db.Column(db.String, default="False")
 
     # Storing basic metadata is helpful
     created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
@@ -249,7 +249,7 @@ class Event(db.Model):
     year = db.Column(db.Integer, default=datetime.utcnow().year)
 
     # Events get archived once all greeting (or thank-you) cards are sent
-    is_archived = db.Column(db.Integer, default=0)
+    is_archived = db.Column(db.String, default="False")
 
     # Additional context about this event
     notes = db.Column(db.String)
@@ -309,7 +309,7 @@ class Gift(db.Model):
 
     # Some friends & family ask you not to send a thank-you card
     # TODO: Update all boolean db values to string?
-    should_a_card_be_sent = db.Column(db.Integer, default=1)
+    should_a_card_be_sent = db.Column(db.String, default="True")
 
     # Additional context about this gift
     notes = db.Column(db.String)
@@ -323,7 +323,7 @@ class Gift(db.Model):
             "type":                  self.type,
             "origin":                self.origin,
             "date":                  self.date.strftime("%Y-%m-%d") if self.date else None,
-            "should_a_card_be_sent": self.should_a_card_be_sent,
+            "should_a_card_be_sent": convert_to_bool(self.should_a_card_be_sent),
             "notes":                 self.notes
         }
 
