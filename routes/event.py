@@ -67,25 +67,26 @@ class EventApi(Resource):
 
     @staticmethod
     def get() -> json:
-        """Return data for the specified event_id"""
+        """Return data for the specified event id"""
         logger.debug(f"Start of EventAPI.GET")
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("event_id", type=int, nullable=False, store_missing=False,
+        parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
         # Parse the provided arguments
         args = parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
-        # Validate that an event_id was provided
+        # Validate that an event id was provided
         try:
-            event_id = args["event_id"]
-            logger.debug(f"Event_id={event_id} was read successfully")
+            event_id = args["id"]
+            logger.debug(f"Event id={event_id} was read successfully")
         except KeyError as e:
-            logger.info(f"Error parsing event_id: no value was provided. {e}")
-            return f"Must provide a value for event_id.", 400
+            error_msg = f"Error parsing event id: no value was provided. {e}"
+            logger.info(error_msg)
+            return error_msg, 400
 
         # Retrieve the selected record
         try:
@@ -98,12 +99,13 @@ class EventApi(Resource):
                 return event.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No records found for event_id={event_id}.")
+                error_msg = f"No records found for event id={event_id}."
+                logger.debug(error_msg)
                 logger.debug("End of EventAPI.GET")
-                return f"No records found for event_id={event_id}.", 404
+                return error_msg, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No records found for event_id={event_id}.\n{e}"
+            error_msg = f"No records found for event id={event_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of EventAPI.GET")
             return error_msg, 404
@@ -118,7 +120,8 @@ class EventApi(Resource):
         parser.add_argument("name", type=str)
         parser.add_argument("date", type=str)
         parser.add_argument("year", type=int)
-        parser.add_argument("is_archived", type=int)
+        parser.add_argument("is_archived", type=str)
+        parser.add_argument("notes", type=str)
 
         # Parse the arguments provided
         args = parser.parse_args()
@@ -135,7 +138,7 @@ class EventApi(Resource):
             db.session.commit()
             logger.debug("Commit completed")
 
-            # Return the event_id to the requester
+            # Return the event id to the requester
             logger.debug("End of EventAPI.POST")
             return new_event.id, 201
 
@@ -147,7 +150,7 @@ class EventApi(Resource):
 
     @staticmethod
     def put() -> json:
-        """Update an existing record by event_id"""
+        """Update an existing record by event id"""
         logger.debug(f"Start of EventAPI.PUT")
         logger.debug(request)
 
@@ -155,7 +158,8 @@ class EventApi(Resource):
         parser.add_argument("name", type=str)
         parser.add_argument("date", type=date)
         parser.add_argument("year", type=int)
-        parser.add_argument("is_archived", type=int)
+        parser.add_argument("is_archived", type=str)
+        parser.add_argument("notes", type=str)
 
         # Parse the arguments provided
         args = parser.parse_args()
@@ -163,11 +167,11 @@ class EventApi(Resource):
 
         # Validate that an event_id was provided
         try:
-            event_id = args["event_id"]
-            logger.debug(f"Event_id={event_id} was read successfully")
+            event_id = args["id"]
+            logger.debug(f"Event id={event_id} was read successfully")
         except KeyError as e:
-            logger.info(f"Error parsing event_id: no value was provided. {e}")
-            return f"Must provide a value for event_id.", 400
+            logger.info(f"Error parsing event id: no value was provided. {e}")
+            return f"Must provide a value for event id.", 400
 
         try:
             # Retrieve the specified event record
@@ -178,6 +182,7 @@ class EventApi(Resource):
             event.date = args["date"]
             event.year = args["year"]
             event.is_archived = args["is_archived"]
+            event.notes = args["notes"]
 
             # Commit these changes to the db
             logger.debug("Attempting to commit db changes")
@@ -195,26 +200,27 @@ class EventApi(Resource):
 
     @staticmethod
     def delete() -> json:
-        """Delete the specified record by event_id"""
+        """Delete the specified record by event id"""
         logger.debug(f"Start of EventAPI.DELETE")
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("event_id", type=int, nullable=False, store_missing=False,
+        parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
         # Parse the provided arguments
         args = parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
-        # Validate that an event_id was provided
+        # Validate that an event id was provided
         try:
-            event_id = args["event_id"]
-            logger.debug(f"Event_id={event_id} was read successfully")
+            event_id = args["id"]
+            logger.debug(f"Event id={event_id} was read successfully")
         except KeyError as e:
-            logger.info(f"Error parsing event_id: no value was provided. {e}")
+            error_msg = f"Error parsing event id: no value was provided. {e}"
+            logger.info(error_msg)
             logger.debug(f"End of EventAPI.DELETE")
-            return f"No value provided for event_id.", 400
+            return error_msg, 400
 
         try:
             # Retrieve the selected record
@@ -234,13 +240,13 @@ class EventApi(Resource):
                 return event.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                error_msg = f"No record found for event_id={event_id}."
+                error_msg = f"No record found for event id={event_id}."
                 logger.debug(error_msg)
                 logger.debug("End of EventAPI.GET")
                 return error_msg, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No record found for event_id={event_id}.\n{e}"
+            error_msg = f"No record found for event id={event_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of EventAPI.GET")
             return error_msg, 404

@@ -67,25 +67,26 @@ class CardApi(Resource):
 
     @staticmethod
     def get() -> json:
-        """Return data for the specified card_id"""
+        """Return data for the specified card id"""
         logger.debug(f"Start of CardAPI.GET")
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("card_id", type=int, nullable=False, store_missing=False,
+        parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
         # Parse the provided arguments
         args = parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
-        # Validate that a card_id was provided
+        # Validate that a card id was provided
         try:
-            card_id = args["card_id"]
-            logger.debug(f"Card_id={card_id} was read successfully")
+            card_id = args["id"]
+            logger.debug(f"Card id={card_id} was read successfully")
         except KeyError as e:
-            logger.info(f"Error parsing card_id: no value was provided. {e}")
-            return f"Must provide a value for card_id.", 400
+            error_msg = f"Error parsing card id: no value was provided. {e}"
+            logger.info(error_msg)
+            return error_msg, 400
 
         # Retrieve the selected record
         try:
@@ -98,12 +99,12 @@ class CardApi(Resource):
                 return card.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No records found for card_id={card_id}.")
+                logger.debug(f"No records found for card id={card_id}.")
                 logger.debug("End of CardAPI.GET")
-                return f"No records found for card_id={card_id}.", 404
+                return f"No records found for card id={card_id}.", 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No records found for card_id={card_id}.\n{e}"
+            error_msg = f"No records found for card id={card_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of CardAPI.GET")
             return error_msg, 404
@@ -122,6 +123,7 @@ class CardApi(Resource):
         parser.add_argument("household_id", type=int)
         parser.add_argument("address_id", type=int)
         parser.add_argument("date_sent", type=date)
+        parser.add_argument("notes", type=str)
 
         # Parse the arguments provided
         args = parser.parse_args()
@@ -150,7 +152,7 @@ class CardApi(Resource):
             db.session.commit()
             logger.debug("Commit completed")
 
-            # Return the card_id to the requester
+            # Return the newly generated id
             logger.debug("End of CardAPI.POST")
             return new_card.id, 201
 
@@ -162,7 +164,7 @@ class CardApi(Resource):
 
     @staticmethod
     def put() -> json:
-        """Update an existing record by card_id"""
+        """Update an existing record by card id"""
         logger.debug(f"Start of CardAPI.PUT")
         logger.debug(request)
 
@@ -174,20 +176,22 @@ class CardApi(Resource):
         parser.add_argument("household_id", type=int)
         parser.add_argument("address_id", type=int)
         parser.add_argument("date_sent", type=date)
+        parser.add_argument("notes", type=str)
 
         # Parse the arguments provided
         args = parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
-        # Validate that a card_id was provided
+        # Validate that a card id was provided
         try:
-            card_id = args["card_id"]
-            logger.debug(f"Card_id={card_id} was read successfully")
+            card_id = args["id"]
+            logger.debug(f"Card id={card_id} was read successfully")
 
         except KeyError as e:
-            logger.info(f"Error parsing card_id: no value was provided. {e}")
+            error_msg = f"Error parsing card id: no value was provided. {e}"
+            logger.info(error_msg)
             logger.debug("End of CardAPI.PUT")
-            return f"Must provide a value for card_id.", 400
+            return error_msg, 400
 
         try:
             # Retrieve the specified card record
@@ -201,6 +205,7 @@ class CardApi(Resource):
             card.households = args["households"]
             card.address_id = args["address_id"]
             card.date_sent = args["date_sent"]
+            card.date_sent = args["notes"]
 
             # If the card's status wasn't already "Sent",
             #  and the card's status is being updated to "Sent",
@@ -225,26 +230,27 @@ class CardApi(Resource):
 
     @staticmethod
     def delete() -> json:
-        """Delete the specified record by card_id"""
+        """Delete the specified record by card id"""
         logger.debug(f"Start of CardAPI.DELETE")
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("card_id", type=int, nullable=False, store_missing=False,
+        parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
         # Parse the provided arguments
         args = parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
-        # Validate that a card_id was provided
+        # Validate that a card id was provided
         try:
-            card_id = args["card_id"]
-            logger.debug(f"Card_id={card_id} was read successfully")
+            card_id = args["id"]
+            logger.debug(f"Card id={card_id} was read successfully")
         except KeyError as e:
-            logger.info(f"Error parsing card_id: no value was provided. {e}")
+            error_msg = f"Error parsing card id: no value was provided. {e}"
+            logger.info(error_msg)
             logger.debug(f"End of CardAPI.DELETE")
-            return f"No value provided for card_id.", 400
+            return error_msg, 400
 
         try:
             # Retrieve the selected record
@@ -264,13 +270,13 @@ class CardApi(Resource):
                 return card.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                error_msg = f"No record found for card_id={card_id}."
+                error_msg = f"No record found for card id={card_id}."
                 logger.debug(error_msg)
                 logger.debug("End of CardAPI.GET")
                 return error_msg, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No record found for card_id={card_id}.\n{e}"
+            error_msg = f"No record found for card id={card_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of CardAPI.GET")
             return error_msg, 404

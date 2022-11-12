@@ -67,19 +67,19 @@ class AddressApi(Resource):
 
     @staticmethod
     def get() -> json:
-        """Return data for the specified address_id"""
+        """Return data for the specified address id"""
         logger.debug(f"Start of AddressAPI.GET")
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("address_id", type=int, nullable=False, store_missing=False,
+        parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
         # Parse the provided arguments
         args = parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
-        address_id = args["address_id"]
+        address_id = args["id"]
 
         # Retrieve the selected record
         try:
@@ -92,12 +92,13 @@ class AddressApi(Resource):
                 return address.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.info(f"No records found for address_id={address_id}.")
+                error_msg = f"No records found for address id={address_id}."
+                logger.info(error_msg)
                 logger.debug("End of AddressAPI.GET")
-                return f"No records found for address_id={address_id}.", 404
+                return error_msg, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No records found for address_id={address_id}.\n{e}"
+            error_msg = f"No records found for address id={address_id}.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.GET")
             return error_msg, 404
@@ -109,15 +110,15 @@ class AddressApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("household_id", type=int, nullable=False, required=True)
+        parser.add_argument("id", type=int, nullable=False, required=True)
         parser.add_argument("line_1", type=str)
         parser.add_argument("line_2", type=str)
         parser.add_argument("city", type=str)
         parser.add_argument("state", type=str)
         parser.add_argument("zip", type=str)
         parser.add_argument("country", type=str, default="United States")
-        parser.add_argument("is_current", type=int, default=1)
-        parser.add_argument("is_likely_to_change", type=int, default=0)
+        parser.add_argument("is_current", type=str, default="True")
+        parser.add_argument("is_likely_to_change", type=str, default="False")
 
         # Parse the arguments provided
         args = parser.parse_args()
@@ -138,7 +139,7 @@ class AddressApi(Resource):
             db.session.commit()
             logger.debug("Commit completed")
 
-            # Return the address_id to the requester
+            # Return the newly created id to the requester
             logger.debug("End of AddressAPI.POST")
             return new_address.id, 201
 
@@ -155,7 +156,7 @@ class AddressApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("address_id", type=int, nullable=False, store_missing=False)
+        parser.add_argument("id", type=int, nullable=False, store_missing=False)
         parser.add_argument("household_id", type=int, nullable=False, required=True)
         parser.add_argument("line_1", type=str)
         parser.add_argument("line_2", type=str)
@@ -163,8 +164,9 @@ class AddressApi(Resource):
         parser.add_argument("state", type=str)
         parser.add_argument("zip", type=str)
         parser.add_argument("country", type=str, default="United States")
-        parser.add_argument("is_current", type=int, default=1)
-        parser.add_argument("is_likely_to_change", type=int, default=0)
+        parser.add_argument("is_current", type=str, default="True")
+        parser.add_argument("is_likely_to_change", type=str, default="False")
+        parser.add_argument("notes", type=str)
 
         # Parse the arguments provided
         args = parser.parse_args()
@@ -172,7 +174,7 @@ class AddressApi(Resource):
 
         try:
             # Retrieve the specified address record
-            address = Address.query.get(args["address_id"])
+            address = Address.query.get(args["id"])
 
             # Update this record with the provided data
             address.households = args["households"]
@@ -184,6 +186,7 @@ class AddressApi(Resource):
             address.country = args["country"]
             address.is_current = args["is_current"]
             address.is_likely_to_change = args["is_likely_to_change"]
+            address.notes = args["notes"]
 
             # Update last_modified to the current timestamp
             address.last_modified = datetime.utcnow()
@@ -204,26 +207,27 @@ class AddressApi(Resource):
 
     @staticmethod
     def delete() -> json:
-        """Delete the specified record by address_id"""
+        """Delete the specified record by address id"""
         logger.debug(f"Start of AddressAPI.DELETE")
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("address_id", type=int, nullable=False, store_missing=False,
+        parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
         # Parse the provided arguments
         args = parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
-        # Validate that an address_id was provided
+        # Validate that an address id was provided
         try:
-            address_id = args["address_id"]
-            logger.debug(f"Address_id={address_id} was read successfully")
+            address_id = args["id"]
+            logger.debug(f"Address id={address_id} was read successfully")
         except KeyError as e:
-            logger.info(f"Error parsing address_id: no value was provided. {e}")
+            error_msg = f"Error parsing `id`: no value was provided. {e}"
+            logger.info(error_msg)
             logger.debug(f"End of AddressAPI.DELETE")
-            return f"No value provided for address_id.", 400
+            return error_msg, 400
 
         # Retrieve the selected record
         try:
@@ -231,10 +235,10 @@ class AddressApi(Resource):
 
             if address:
                 # Record successfully returned from the db
-                logger.debug(f"Address record found.  Attempting to delete it.")
+                logger.debug(f"Address record found, attempting to delete it.")
                 address.delete()
 
-                logger.debug("About to commit this delete to the db.")
+                logger.debug("About to commit this DELETE to the db.")
                 db.session.commit()
                 logger.debug("Commit completed.")
                 logger.info("Address record successfully deleted.")
@@ -243,19 +247,19 @@ class AddressApi(Resource):
                 return address.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                error_msg = f"No record found for address_id={address_id}."
+                error_msg = f"No record found for address id={address_id}."
                 logger.info(error_msg)
                 logger.debug(f"End of AddressAPI.DELETE")
                 return error_msg, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No record found for address_id={address_id}.\n{e}"
+            error_msg = f"No record found for address id={address_id}.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.DELETE")
             return error_msg, 404
 
         except SQLAlchemyError as e:
-            error_msg = f"SQLAlchemy error when attempting to delete address_id={address_id}.\n{e}"
+            error_msg = f"SQLAlchemy error when attempting to delete address id={address_id}.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.DELETE")
             return error_msg, 500

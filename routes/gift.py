@@ -67,12 +67,12 @@ class GiftApi(Resource):
 
     @staticmethod
     def get() -> json:
-        """Return data for the specified gift_id"""
+        """Return data for the specified gift id"""
         logger.debug(f"Start of GiftAPI.GET")
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("gift_id", type=int, nullable=False, store_missing=False,
+        parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
         # Parse the provided arguments
@@ -81,11 +81,12 @@ class GiftApi(Resource):
 
         # Validate that a gift_id was provided
         try:
-            gift_id = args["gift_id"]
-            logger.debug(f"Gift_id={gift_id} was read successfully")
+            gift_id = args["id"]
+            logger.debug(f"Gift id={gift_id} was read successfully")
         except KeyError as e:
-            logger.info(f"Error parsing gift_id: no value was provided. {e}")
-            return f"Must provide a value for gift_id.", 400
+            error_msg = f"Error parsing gift id: no value was provided. {e}"
+            logger.info(error_msg)
+            return error_msg, 400
 
         # Retrieve the selected record
         try:
@@ -98,12 +99,13 @@ class GiftApi(Resource):
                 return gift.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No records found for gift_id={gift_id}.")
+                error_msg = f"No records found for gift id={gift_id}."
+                logger.debug(error_msg)
                 logger.debug("End of GiftAPI.GET")
-                return f"No records found for gift_id={gift_id}.", 404
+                return error_msg, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No records found for gift_id={gift_id}.\n{e}"
+            error_msg = f"No records found for gift id={gift_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of GiftAPI.GET")
             return error_msg, 404
@@ -121,7 +123,7 @@ class GiftApi(Resource):
         parser.add_argument("type", type=str)
         parser.add_argument("origin", type=str)
         parser.add_argument("date", type=date)
-        parser.add_argument("should_a_card_be_sent", type=bool)
+        parser.add_argument("should_a_card_be_sent", type=str)
         parser.add_argument("notes", type=str)
 
         # Parse the arguments provided
@@ -139,7 +141,7 @@ class GiftApi(Resource):
             db.session.commit()
             logger.debug("Commit completed")
 
-            # Return the gift_id to the requester
+            # Return the gift id to the requester
             logger.debug("End of GiftAPI.POST")
             return new_gift.id, 201
 
@@ -151,7 +153,7 @@ class GiftApi(Resource):
 
     @staticmethod
     def put() -> json:
-        """Update an existing record by gift_id"""
+        """Update an existing record by gift id"""
         logger.debug(f"Start of GiftAPI.PUT")
         logger.debug(request)
 
@@ -162,20 +164,21 @@ class GiftApi(Resource):
         parser.add_argument("type", type=str)
         parser.add_argument("origin", type=str)
         parser.add_argument("date", type=date)
-        parser.add_argument("should_a_card_be_sent", type=bool)
+        parser.add_argument("should_a_card_be_sent", type=str)
         parser.add_argument("notes", type=str)
 
         # Parse the arguments provided
         args = parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
-        # Validate that a gift_id was provided
+        # Validate that a gift id was provided
         try:
-            gift_id = args["gift_id"]
-            logger.debug(f"Gift_id={gift_id} was read successfully")
+            gift_id = args["id"]
+            logger.debug(f"Gift id={gift_id} was read successfully")
         except KeyError as e:
-            logger.info(f"Error parsing gift_id: no value was provided. {e}")
-            return f"Must provide a value for gift_id.", 400
+            error_msg = f"Error parsing gift id: no value was provided. {e}"
+            logger.info(error_msg)
+            return error_msg, 400
 
         try:
             # Retrieve the specified gift record
@@ -207,26 +210,27 @@ class GiftApi(Resource):
 
     @staticmethod
     def delete() -> json:
-        """Delete the specified record by gift_id"""
+        """Delete the specified record by gift id"""
         logger.debug(f"Start of GiftAPI.DELETE")
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("gift_id", type=int, nullable=False, store_missing=False,
+        parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
         # Parse the provided arguments
         args = parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
-        # Validate that a gift_id was provided
+        # Validate that a gift id was provided
         try:
-            gift_id = args["gift_id"]
-            logger.debug(f"Gift_id={gift_id} was read successfully")
+            gift_id = args["id"]
+            logger.debug(f"Gift id={gift_id} was read successfully")
         except KeyError as e:
-            logger.info(f"Error parsing gift_id: no value was provided. {e}")
+            error_msg = f"Error parsing gift id: no value was provided. {e}"
+            logger.info(error_msg)
             logger.debug(f"End of GiftAPI.DELETE")
-            return f"No value provided for gift_id.", 400
+            return error_msg, 400
 
         try:
             # Retrieve the selected record
@@ -246,13 +250,13 @@ class GiftApi(Resource):
                 return gift.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                error_msg = f"No record found for gift_id={gift_id}."
+                error_msg = f"No record found for gift id={gift_id}."
                 logger.debug(error_msg)
                 logger.debug("End of GiftAPI.GET")
                 return error_msg, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
-            error_msg = f"No record found for gift_id={gift_id}.\n{e}"
+            error_msg = f"No record found for gift id={gift_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of GiftAPI.GET")
             return error_msg, 404

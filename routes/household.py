@@ -15,7 +15,7 @@ logger = getLogger()
 # Initialize a parser for the request parameters
 base_parser = reqparse.RequestParser(trim=True)
 
-# Adding `id` since it's required for most requests
+# `id` is required for most requests
 base_parser.add_argument("id", type=int, nullable=False, store_missing=False,
                          required=True)
 
