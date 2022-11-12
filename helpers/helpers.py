@@ -8,7 +8,7 @@ logger = getLogger()
 
 def convert_to_bool(input) -> bool:
     """Converts a given input to boolean"""
-    logger.debug(f"Starting convert_to_bool({input}), type: {type(input)}")
+    # logger.debug(f"Starting convert_to_bool({input}), type: {type(input)}")
 
     output = input
 
@@ -30,5 +30,5 @@ def convert_to_bool(input) -> bool:
         logger.warning(f"Setting value to False")
         output = False
 
-    logger.debug(f"Ending convert_to_bool, returning {output}")
+    # logger.debug(f"Ending convert_to_bool, returning {output}")
     return output

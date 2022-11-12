@@ -31,7 +31,7 @@ class Address(db.Model):
     # Second line of the street address, typically used for apartment / unit number
     line_2 = db.Column(db.String)
 
-    # Doesn't really need a comment, but it looks weird without one
+    # Doesn't really need a comment, but this looks weird without one
     city = db.Column(db.String)
 
     # Defining these as `state` & `zip` effectively pigeonholes the app as US-only, but
@@ -105,26 +105,6 @@ class Address(db.Model):
                f"created_date={self.created_date}, last_modified={self.last_modified})"
 
 
-# class AddressSchema(Schema):
-#     """
-#     Schema for the marshmallow serializer
-#     """
-#
-#     id = fields.Integer()
-#     household_id = fields.Integer()
-#     line_1 = fields.String()
-#     line_2 = fields.String()
-#     city = fields.String()
-#     state = fields.String()
-#     zip = fields.String()
-#     country = fields.String()
-#     full_address = fields.String()
-#     is_current = fields.Boolean()
-#     is_likely_to_change = fields.Boolean()
-#     created_date = fields.DateTime()
-#     last_modified = fields.DateTime()
-#
-
 class Household(db.Model):
     """
     Table to store data about each household.
@@ -140,7 +120,7 @@ class Household(db.Model):
 
     # Human-friendly reference for a particular household
     #  Setting a default helps for debugging since uniqueness is enforced
-    nickname = db.Column(db.String, unique=True, required=True, index=True,
+    nickname = db.Column(db.String, unique=True, nullable=False, index=True,
                          default=f"An unknown {datetime.utcnow()}")
 
     # First names of the heads of household
@@ -160,7 +140,7 @@ class Household(db.Model):
     # Childhood friends, Family friends, Work friends, Colleagues, Neighbors, Acquaintances, etc.
     relationship = db.Column(db.String)
 
-    # Defines this household as either Friends or Family
+    # Defines this household as Family, Friends, or Acquaintances
     relationship_type = db.Column(db.String)
 
     # For family relationships, did these originate from mine or from my spouse's side?
@@ -308,7 +288,6 @@ class Gift(db.Model):
     date = db.Column(db.Date, index=True)
 
     # Some friends & family ask you not to send a thank-you card
-    # TODO: Update all boolean db values to string?
     should_a_card_be_sent = db.Column(db.String, default="True")
 
     # Additional context about this gift
@@ -395,3 +374,51 @@ class Card(db.Model):
                f"address={self.address_id}, " \
                f"date_sent={self.date_sent.strftime('%Y-%m-%d') if self.date_sent else None}, " \
                f"notes={self.notes})"
+
+
+class Picklists(db.Model):
+    """
+    Stores a comma-separated list of picklist values for certain fields.
+    """
+    # Set the name of this table
+    __tablename__ = "picklist_values"
+
+    # Version is the primary key
+    version = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
+
+    # Is this the version to use by default?
+    is_default = db.Column(db.String, default="False")
+
+    # Household picklists
+    household_relationship = db.Column(db.String)
+    household_relationship_type = db.Column(db.String)
+    household_family_side = db.Column(db.String)
+
+    # Card picklists
+    card_type = db.Column(db.String)
+    card_status = db.Column(db.String)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        # Convert the provided value for is_default to boolean
+        self.is_default = convert_to_bool(self.is_default)
+
+    def to_dict(self):
+        return {
+            "version":                     self.version,
+            "is_default":                  convert_to_bool(self.is_default),
+            "household_relationship":      self.household_relationship.split(","),
+            "household_relationship_type": self.household_relationship_type.split(","),
+            "household_family_side":       self.household_family_side.split(","),
+            "card_type":                   self.card_type.split(","),
+            "card_status":                 self.card_status.split(",")
+        }
+
+    def __repr__(self):
+        return f"PicklistValues(version: {self.version}, is_default: {self.is_default} \n" \
+               f"\thh_relationship: {self.household_relationship} \n" \
+               f"\thh_relationship_type: {self.household_relationship_type} \n" \
+               f"\thh_family_side: {self.household_family_side} \n" \
+               f"\tcard_type: {self.card_type} \n" \
+               f"\tcard_status: {self.card_status})"
