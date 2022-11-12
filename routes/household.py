@@ -13,7 +13,30 @@ import json
 logger = getLogger()
 
 # Initialize a parser for the request parameters
-parser = reqparse.RequestParser(trim=True)
+base_parser = reqparse.RequestParser(trim=True)
+
+# Adding `id` since it's required for most requests
+base_parser.add_argument("id", type=int, nullable=False, store_missing=False,
+                         required=True)
+
+
+def add_household_fields_to_parser(provided_parser) -> reqparse:
+    """Adds the remaining household fields to a given parser."""
+    logger.debug("Adding household fields to the parser")
+    provided_parser.add_argument("nickname", type=str)
+    provided_parser.add_argument("first_names", type=str)
+    provided_parser.add_argument("surname", type=str)
+    provided_parser.add_argument("formal_name", type=str)
+    provided_parser.add_argument("relationship", type=str)
+    provided_parser.add_argument("relationship_type", type=str)
+    provided_parser.add_argument("family_side", type=str)
+    provided_parser.add_argument("kids", type=str)
+    provided_parser.add_argument("pets", type=str)
+    provided_parser.add_argument("should_receive_holiday_card", type=str)
+    provided_parser.add_argument("notes", type=str)
+
+    logger.debug("Done adding household fields to the parser")
+    return provided_parser
 
 
 class HouseholdCollectionApi(Resource):
@@ -21,9 +44,10 @@ class HouseholdCollectionApi(Resource):
     Endpoint:   /api/v1/all_households
     Methods:    GET
     """
+
     @staticmethod
     def get() -> json:
-        """Return all households from the database"""
+        """Return all households from the database. No arguments should be provided."""
         logger.debug("Start of HouseholdCollectionAPI.GET")
 
         # Retrieve all households from the db, sorted by id
@@ -67,24 +91,22 @@ class HouseholdApi(Resource):
 
     @staticmethod
     def get() -> json:
+        """
+        Returns a single Household record, based on the provided household id.
+
+        REQUIRED ARGUMENTS
+            key: id, type: int
+        """
         logger.debug("Start of HouseholdAPI.GET")
         logger.debug(request)
 
-        # Parse the request data to a local dictionary
-        # request_data = request.get_json(force=True)
-        # logger.debug(f"Request json: {request_data}")
-
-        # The only argument expected is `id`
-        parser.add_argument("id", type=int, nullable=False, store_missing=False,
-                            required=True)
-
+        # No need for additional parser args since the only required arg is `id`
         # Parse the arguments provided
-        args = parser.parse_args()
+        args = base_parser.parse_args()
 
-        """Return data for the specified household_id"""
         # Validate that a household id was provided
         try:
-            household_id = args['id']
+            household_id = args["id"]
             logger.debug(f"Household with id={household_id} was read successfully")
         except KeyError as e:
             logger.info(f"Error parsing household id: no value was provided. {e}")
@@ -114,20 +136,31 @@ class HouseholdApi(Resource):
 
     @staticmethod
     def post() -> json:
-        """Add a new household record to the database"""
+        """
+        Add a new household record to the database
 
-        # Define the expected arguments
-        parser.add_argument("nickname", type=str)
-        parser.add_argument("first_names", type=str)
-        parser.add_argument("surname", type=str)
-        parser.add_argument("formal_name", type=str)
-        parser.add_argument("relationship", type=str)
-        parser.add_argument("relationship_type", type=str)
-        parser.add_argument("family_side", type=str)
-        parser.add_argument("kids", type=str)
-        parser.add_argument("pets", type=str)
-        parser.add_argument("should_receive_holiday_card", type=int)
-        parser.add_argument("notes", type=str)
+        REQUIRED ARGUMENTS
+            key: nickname, type: str
+
+        OPTIONAL ARGUMENTS
+            key: first_names, type: str
+            key: surname, type: str
+            key: formal_name, type: str
+            key: relationship, type: str
+            key: relationship_type, type: str
+            key: family_side, type: str
+            key: kids, type: str
+            key: pets, type: str
+            key: should_receive_holiday_card, type: int
+            key: notes, type: str
+        """
+
+        # Add the other household args to our parser
+        parser = add_household_fields_to_parser(base_parser)
+
+        # Remove the `id` arg from our parser; the database will generate this
+        parser.remove_argument("id")
+        logger.debug(f"parser keys: {parser.args.__str__()}")
 
         # Parse the arguments provided
         args = parser.parse_args()
@@ -159,21 +192,24 @@ class HouseholdApi(Resource):
 
     @staticmethod
     def put() -> json:
-        """Update an existing record by household_id"""
-        # Define the expected arguments
-        parser.add_argument("id", type=int, nullable=False, store_missing=False,
-                            required=True)
-        parser.add_argument("nickname", type=str)
-        parser.add_argument("first_names", type=str)
-        parser.add_argument("surname", type=str)
-        parser.add_argument("formal_name", type=str)
-        parser.add_argument("relationship", type=str)
-        parser.add_argument("relationship_type", type=str)
-        parser.add_argument("family_side", type=str)
-        parser.add_argument("kids", type=str)
-        parser.add_argument("pets", type=str)
-        parser.add_argument("should_receive_holiday_card", type=int)
-        parser.add_argument("notes", type=str)
+        """
+        Update an existing record using the provided household id.
+
+        REQUIRED ARGUMENTS
+            key: id, type: int
+            key: first_names, type: str
+            key: surname, type: str
+            key: formal_name, type: str
+            key: relationship, type: str
+            key: relationship_type, type: str
+            key: family_side, type: str
+            key: kids, type: str
+            key: pets, type: str
+            key: should_receive_holiday_card, type: int
+            key: notes, type: str
+        """
+        # Add the other household fields to the expected arguments
+        parser = add_household_fields_to_parser(base_parser)
 
         # Parse the arguments provided
         args = parser.parse_args()
@@ -192,11 +228,24 @@ class HouseholdApi(Resource):
 
             # Update this record with the provided data
             household.nickname = args["nickname"]
+            household.first_names = args["first_names"]
             household.surname = args["surname"]
             household.formal_name = args["formal_name"]
             household.relationship = args["relationship"]
             household.relationship_type = args["relationship_type"]
+            household.family_side = args["family_side"]
+            household.kids = args["kids"]
+            household.pets = args["pets"]
+            household.should_receive_holiday_card = args["should_receive_holiday_card"]
+            household.notes = args["notes"]
 
+        except SQLAlchemyError as e:
+            error_msg = f"Unable to update the Household record.\n{e}"
+            logger.debug(error_msg)
+            logger.debug("End of HouseholdAPI.PUT")
+            return error_msg, 500
+
+        try:
             # Commit these changes to the db
             logger.debug("Attempting to commit db changes")
             db.session.commit()
@@ -213,18 +262,20 @@ class HouseholdApi(Resource):
 
     @staticmethod
     def delete() -> json:
-        """Delete the specified record by household_id"""
+        """
+        Deletes a single Household record, based on the provided household id.
 
-        # The only argument expected is `id`
-        parser.add_argument("id", type=int, nullable=False, store_missing=False,
-                            required=True)
+        REQUIRED ARGUMENTS
+            key: id, type: int
+        """
 
+        # No need for additional parser args since the only required arg is `id`
         # Parse the arguments provided
-        args = parser.parse_args()
+        args = base_parser.parse_args()
 
         # Validate that a household id was provided
         try:
-            household_id = args['id']
+            household_id = args["id"]
             logger.debug(f"Household id={household_id} was provided.")
         except KeyError as e:
             error_msg = f"Missing household id.\n{e}"

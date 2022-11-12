@@ -144,7 +144,8 @@ class Household(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, unique=True)
 
     # Human-friendly reference for a particular household
-    nickname = db.Column(db.String, unique=True)
+    #  Setting a default helps for debugging since uniqueness is enforced
+    nickname = db.Column(db.String, unique=True, required=True, default=f"TBD {datetime.utcnow()}")
 
     # First names of the heads of household
     first_names = db.Column(db.String)
@@ -177,7 +178,7 @@ class Household(db.Model):
     pets = db.Column(db.String)
 
     # Do we want this household on our holiday/Christmas card list?  0 = False, 1 = True
-    should_receive_holiday_card = db.Column(db.Integer, default=0)
+    should_receive_holiday_card = db.Column(db.String, default="False")
 
     # Additional notes about this household
     notes = db.Column(db.String)
