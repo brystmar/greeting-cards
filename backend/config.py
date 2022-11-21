@@ -33,6 +33,7 @@ class Config(object):
 
     # Use the dev database when debug mode is enabled
     SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI_DEV
+    # SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI_PROD
     logger.debug(f"SQLAlchemy db URI: {SQLALCHEMY_DATABASE_URI}")
 
     # Should SQLAlchemy send a notification to the app every time an object changes?

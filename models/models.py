@@ -130,7 +130,10 @@ class Household(db.Model):
     # to implement; I'll find a better solution for this down the road.
     surname = db.Column(db.String)
 
-    # When addressing a formal letter, how should this household be addressed?  Examples:
+    # To whom should letters be addressed for this household?
+    addressed_to = db.Column(db.String)
+
+    # For fancypants formal letters, how should this household be addressed?  Examples:
     #  Mr. & Mrs. John Doe
     #  Dr. Jane Doe & Mr. Nicholas Smith
     #  Dave & Pat Johnson
@@ -172,6 +175,7 @@ class Household(db.Model):
             "nickname":                    self.nickname,
             "first_names":                 self.first_names,
             "surname":                     self.surname,
+            "addressed_to":                self.addressed_to,
             "formal_name":                 self.formal_name,
             "relationship":                self.relationship,
             "relationship_type":           self.relationship_type,
@@ -201,7 +205,7 @@ class Household(db.Model):
 
     def __repr__(self):
         return f"Household(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
-               f"surname={self.surname}, rel={self.relationship}, " \
+               f"surname={self.surname}, rel={self.relationship}, addr_to={self.addressed_to}" \
                f"rel_type={self.relationship_type}, family_side={self.family_side}, " \
                f"kids={self.kids}, pets={self.pets}, notes={self.notes}, " \
                f"should_receive_card={self.should_receive_holiday_card}, " \
