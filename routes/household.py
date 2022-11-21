@@ -26,6 +26,7 @@ def add_household_fields_to_parser(provided_parser) -> reqparse:
     provided_parser.add_argument("nickname", type=str)
     provided_parser.add_argument("first_names", type=str)
     provided_parser.add_argument("surname", type=str)
+    provided_parser.add_argument("address_to", type=str)
     provided_parser.add_argument("formal_name", type=str)
     provided_parser.add_argument("relationship", type=str)
     provided_parser.add_argument("relationship_type", type=str)
@@ -145,7 +146,7 @@ class HouseholdApi(Resource):
         OPTIONAL ARGUMENTS
             key: first_names, type: str
             key: surname, type: str
-            key: addressed_to, type: str
+            key: address_to, type: str
             key: formal_name, type: str
             key: relationship, type: str
             key: relationship_type, type: str
@@ -200,7 +201,7 @@ class HouseholdApi(Resource):
             key: id, type: int
             key: first_names, type: str
             key: surname, type: str
-            key: addressed_to, type: str
+            key: address_to, type: str
             key: formal_name, type: str
             key: relationship, type: str
             key: relationship_type, type: str
@@ -232,7 +233,7 @@ class HouseholdApi(Resource):
             household.nickname = args["nickname"]
             household.first_names = args["first_names"]
             household.surname = args["surname"]
-            household.addressed_to = args["addressed_to"]
+            household.address_to = args["address_to"]
             household.formal_name = args["formal_name"]
             household.relationship = args["relationship"]
             household.relationship_type = args["relationship_type"]
