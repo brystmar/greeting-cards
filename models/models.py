@@ -343,6 +343,9 @@ class Card(db.Model):
     # TODO: Change to a 1-to-many relationship
     gift_id = db.Column(db.Integer, db.ForeignKey('gift.id'))
 
+    # Which event is this for?
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
+
     # Storing the hh_id for clarity, despite being able to reference it using the `gift_id` above
     # Another reminder that getting to 1NF isn't important for this project :)
     household_id = db.Column(db.Integer, db.ForeignKey('household.id'))
@@ -361,8 +364,8 @@ class Card(db.Model):
             "id":           self.id,
             "type":         self.type,
             "status":       self.status,
-            "event_id":     self.event_id,
             "gift_id":      self.gift_id,
+            "event_id":     self.event_id,
             "household_id": self.household_id,
             "address_id":   self.address_id,
             "date_sent":    self.date_sent.strftime("%Y-%m-%d") if self.date_sent else None,
