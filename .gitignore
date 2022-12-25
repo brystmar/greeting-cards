@@ -139,10 +139,6 @@ dmypy.json
 # Logs
 /logs/
 
-# Docker
-/Dockerfile
-Dockerfile
-
 # Local db files
 /instance
 *.sql
