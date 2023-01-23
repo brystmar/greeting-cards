@@ -1,5 +1,5 @@
 """
-Defines the data models of the database tables.
+Define the data model for each database table.
 """
 
 from logging import getLogger
@@ -12,8 +12,8 @@ logger = getLogger()
 
 class Address(db.Model):
     """
-    Table to store the mailing address for a specified household.
-    Each household may have multiple addresses.
+    Stores the mailing address(es) for a given household.
+    Note: Each household may have multiple addresses.
     """
 
     # Set the name of this table
@@ -73,9 +73,9 @@ class Address(db.Model):
             "is_current":          convert_to_bool(self.is_current),
             "is_likely_to_change": convert_to_bool(self.is_likely_to_change),
             "created_date":        self.created_date.strftime(
-                "%Y-%m-%d %H:%M:%M.%f") if self.created_date else datetime.utcnow(),
+                "%Y-%m-%d %H:%M:%S%z") if self.created_date else datetime.utcnow(),
             "last_modified":       self.last_modified.strftime(
-                "%Y-%m-%d %H:%M:%M.%f") if self.last_modified else datetime.utcnow(),
+                "%Y-%m-%d %H:%M:%S%z") if self.last_modified else datetime.utcnow(),
             "notes":               self.notes
         }
 
@@ -107,7 +107,7 @@ class Address(db.Model):
 
 class Household(db.Model):
     """
-    Table to store data about each household.
+    Store data about each household, which is defined as a group of people living together.
     This schema is certainly not optimally designed, but even the act of worrying
     about that is firmly out of scope at this time.
     """
@@ -184,9 +184,9 @@ class Household(db.Model):
             "pets":                        self.pets,
             "should_receive_holiday_card": convert_to_bool(self.should_receive_holiday_card),
             "created_date":                self.created_date.strftime(
-                "%Y-%m-%d %H:%M:%M.%f") if self.created_date else datetime.utcnow(),
+                "%Y-%m-%d %H:%M:%S%z") if self.created_date else datetime.utcnow(),
             "last_modified":               self.last_modified.strftime(
-                "%Y-%m-%d %H:%M:%M.%f") if self.last_modified else datetime.utcnow(),
+                "%Y-%m-%d %H:%M:%S%z") if self.last_modified else datetime.utcnow(),
             "notes":                       self.notes
         }
 
@@ -214,7 +214,7 @@ class Household(db.Model):
 
 class Event(db.Model):
     """
-    Table to store data about events that we'll want to send greeting (or thank you) cards for.
+    Store data about events that we'll want to send greeting (or thank you) cards for.
     """
 
     # Set the name of this table
@@ -261,7 +261,7 @@ class Event(db.Model):
 
 class Gift(db.Model):
     """
-    Table to store data about gifts received from a particular event.
+    Store data about gifts received from a particular event.
     """
 
     # Set the name of this table
@@ -273,8 +273,11 @@ class Gift(db.Model):
     # Event that the gift was from
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
 
+    # TODO: Migrate to `households` array to support joint-household gifts
+    # Household who gifted the item
+    household_id = db.Column(db.Integer)
+
     # List of households who contributed to this gift
-    # households = db.Column(db.ARRAY)
     households = db.Column(db.Integer)
 
     # Description of the item(s).  You'll send one thank-you card for each gift record.
@@ -324,7 +327,7 @@ class Gift(db.Model):
 
 class Card(db.Model):
     """
-    Table which stores relational data about cards sent for each event (and/or gift).
+    Stores relational data about cards sent for each event (and/or gift).
     """
 
     # Set the name of this table
@@ -385,7 +388,9 @@ class Card(db.Model):
 
 class Picklists(db.Model):
     """
-    Stores a comma-separated list of picklist values for certain fields.
+    Stores a comma-separated list of picklist values for fields shown as picklists in the UI.
+    Probably not an optimal way of storing these data.  However, since not all options may have an
+    associated record, this is the quick & dirty solution we'll use.
     """
     # Set the name of this table
     __tablename__ = "picklist_values"

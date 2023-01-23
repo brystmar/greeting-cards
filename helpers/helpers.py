@@ -32,3 +32,14 @@ def convert_to_bool(input) -> bool:
 
     # logger.debug(f"Ending convert_to_bool, returning {output}")
     return output
+
+
+def remove_milliseconds_from_datetime_string(text) -> str:
+    if isinstance(text, str):
+        position = text.find(".")
+        if position == -1:
+            return text
+        else:
+            return text[:position]
+    else:
+        raise TypeError(f"Input to remove_milliseconds_from_datetime_string must be a string, not {type(text)}.")
