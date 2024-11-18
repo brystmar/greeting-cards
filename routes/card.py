@@ -1,6 +1,6 @@
 """Defines the card-related endpoints."""
 from logging import getLogger
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from backend import db
 from models.models import Card
 from flask import request
@@ -145,7 +145,7 @@ class CardApi(Resource):
         # the `date_sent` attribute to today.
         try:
             if new_card.status.lower() == "sent" and not new_card.date_sent:
-                new_card.date_sent = datetime.utcnow().date()
+                new_card.date_sent = datetime.now(timezone.utc).date()
 
             # Commit this new record so the db generates an id
             logger.debug("Attempting to commit data")
@@ -212,7 +212,7 @@ class CardApi(Resource):
             #  and no value was provided for `date_sent`
             # then set the `date_sent` attribute to today.
             if card.status.lower() != "sent" and args["status"].__str__().lower() == "sent" and not args["date_sent"]:
-                card.date_sent = datetime.utcnow().date()
+                card.date_sent = datetime.now(timezone.utc).date()
 
             # Commit these changes to the db
             logger.debug("Attempting to commit db changes")

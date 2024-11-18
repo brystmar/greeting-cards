@@ -3,8 +3,7 @@ Define the data model for each database table.
 """
 
 from logging import getLogger
-from datetime import datetime
-from datetime import timezone
+from datetime import datetime, timezone
 from backend import db
 from helpers.helpers import convert_to_bool
 

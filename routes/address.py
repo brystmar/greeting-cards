@@ -1,6 +1,6 @@
 """Defines the address-related endpoints."""
 from logging import getLogger
-from datetime import datetime
+from datetime import datetime, timezone
 from backend import db
 from models.models import Address
 from flask import request
@@ -131,7 +131,7 @@ class AddressApi(Resource):
             logger.info(f"New record successfully created: {new_address.to_dict()}")
 
             # Set metadata for this new record
-            new_address.date_created = datetime.utcnow()
+            new_address.date_created = datetime.now(timezone.utc)
             new_address.last_modified = new_address.date_created
 
             # Commit this new record so the db generates an id
@@ -189,7 +189,7 @@ class AddressApi(Resource):
             address.notes = args["notes"]
 
             # Update last_modified to the current timestamp
-            address.last_modified = datetime.utcnow()
+            address.last_modified = datetime.now(timezone.utc)
 
             # Commit these changes to the db
             logger.debug("Attempting to commit db changes")

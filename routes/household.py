@@ -8,7 +8,7 @@ from models.models import Household
 from flask import request
 from flask_restful import Resource, reqparse
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 logger = getLogger()
@@ -243,7 +243,7 @@ class HouseholdApi(Resource):
             household.pets = args["pets"]
             household.should_receive_holiday_card = args["should_receive_holiday_card"]
             household.notes = args["notes"]
-            household.last_modified = datetime.utcnow()
+            household.last_modified = datetime.now(timezone.utc)
 
         except SQLAlchemyError as e:
             error_msg = f"Unable to update the Household record.\n{e}"
