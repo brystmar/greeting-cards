@@ -4,6 +4,7 @@ Define the data model for each database table.
 
 from logging import getLogger
 from datetime import datetime
+from datetime import timezone
 from backend import db
 from helpers.helpers import convert_to_bool
 
@@ -53,8 +54,8 @@ class Address(db.Model):
     is_likely_to_change = db.Column(db.String, default="False")
 
     # Storing basic metadata is helpful
-    created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
-    last_modified = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
+    created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.now(timezone.utc))
+    last_modified = db.Column(db.DateTime, index=True, nullable=False, default=datetime.now(timezone.utc))
 
     # Additional context about this particular address
     notes = db.Column(db.String)
@@ -73,9 +74,9 @@ class Address(db.Model):
             "is_current":          convert_to_bool(self.is_current),
             "is_likely_to_change": convert_to_bool(self.is_likely_to_change),
             "created_date":        self.created_date.strftime(
-                "%Y-%m-%d %H:%M:%S%z") if self.created_date else datetime.utcnow(),
+                "%Y-%m-%d %H:%M:%S%z") if self.created_date else datetime.now(timezone.utc),
             "last_modified":       self.last_modified.strftime(
-                "%Y-%m-%d %H:%M:%S%z") if self.last_modified else datetime.utcnow(),
+                "%Y-%m-%d %H:%M:%S%z") if self.last_modified else datetime.now(timezone.utc),
             "notes":               self.notes
         }
 
@@ -84,7 +85,7 @@ class Address(db.Model):
 
         # Ensure each record has created and last_modified dates
         if not self.created_date:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             logger.debug(f"No created_date found for address_id={self.id}.  Setting to {now}.")
             self.created_date = now
             self.last_modified = now
@@ -121,7 +122,7 @@ class Household(db.Model):
     # Human-friendly reference for a particular household
     #  Setting a default helps for debugging since uniqueness is enforced
     nickname = db.Column(db.String, unique=True, nullable=False, index=True,
-                         default=f"An unknown {datetime.utcnow()}")
+                         default=f"An unknown {datetime.now(timezone.utc)}")
 
     # First names of the heads of household
     first_names = db.Column(db.String)
@@ -159,15 +160,19 @@ class Household(db.Model):
     # Do we want this household on our holiday/Christmas card list?  0 = False, 1 = True
     should_receive_holiday_card = db.Column(db.String, default="False")
 
+    # Are these people still relevant to us?
+    is_relevant = db.Column(db.String, default="True")
+
     # Storing basic metadata is helpful
-    created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
-    last_modified = db.Column(db.DateTime, index=True, nullable=False, default=datetime.utcnow())
+    created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.now(timezone.utc))
+    last_modified = db.Column(db.DateTime, index=True, nullable=False, default=datetime.now(timezone.utc))
 
     # Additional context about this household
     notes = db.Column(db.String)
 
     # Easy SQLAlchemy backref for addresses which match this household
     addresses = db.relationship("Address", backref="household", lazy=True)
+    temp = datetime.now(timezone.utc)
 
     def to_dict(self):
         return {
@@ -183,10 +188,11 @@ class Household(db.Model):
             "kids":                        self.kids,
             "pets":                        self.pets,
             "should_receive_holiday_card": convert_to_bool(self.should_receive_holiday_card),
+            "is_relevant":                 self.is_relevant,
             "created_date":                self.created_date.strftime(
-                "%Y-%m-%d %H:%M:%S%z") if self.created_date else datetime.utcnow(),
+                "%Y-%m-%d %H:%M:%S%z") if self.created_date else datetime.now(timezone.utc),
             "last_modified":               self.last_modified.strftime(
-                "%Y-%m-%d %H:%M:%S%z") if self.last_modified else datetime.utcnow(),
+                "%Y-%m-%d %H:%M:%S%z") if self.last_modified else datetime.now(timezone.utc),
             "notes":                       self.notes
         }
 
@@ -195,7 +201,7 @@ class Household(db.Model):
 
         # Ensure each record has created and last_modified dates
         if not self.created_date:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             logger.debug(f"No created_date found for address_id={self.id}.  Setting to {now}.")
             self.created_date = now
             self.last_modified = now
@@ -208,7 +214,7 @@ class Household(db.Model):
                f"surname={self.surname}, rel={self.relationship}, addr_to={self.address_to}" \
                f"rel_type={self.relationship_type}, family_side={self.family_side}, " \
                f"kids={self.kids}, pets={self.pets}, notes={self.notes}, " \
-               f"should_receive_card={self.should_receive_holiday_card}, " \
+               f"should_receive_card={self.should_receive_holiday_card}, relevant={self.is_relevant}, " \
                f"created_date={self.created_date}, last_modified={self.last_modified})"
 
 
@@ -230,7 +236,7 @@ class Event(db.Model):
     date = db.Column(db.Date)
 
     # For annual events like holiday cards, it makes more sense to only capture the event's year
-    year = db.Column(db.Integer, default=datetime.utcnow().year)
+    year = db.Column(db.Integer, default=datetime.now(timezone.utc).year)
 
     # Events get archived once all greeting (or thank-you) cards are sent
     is_archived = db.Column(db.String, default="False")
