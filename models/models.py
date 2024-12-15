@@ -52,6 +52,9 @@ class Address(db.Model):
     # All apartment addresses will default to True
     is_likely_to_change = db.Column(db.String, default="False")
 
+    # When a household has more than 1 address, which one should the card be mailed to?
+    mail_the_card_to_this_address = db.Column(db.String, default="True")
+
     # Storing basic metadata is helpful
     created_date = db.Column(db.DateTime, index=True, nullable=False, default=datetime.now(timezone.utc))
     last_modified = db.Column(db.DateTime, index=True, nullable=False, default=datetime.now(timezone.utc))
@@ -72,6 +75,7 @@ class Address(db.Model):
             "full_address":        self.full_address,
             "is_current":          convert_to_bool(self.is_current),
             "is_likely_to_change": convert_to_bool(self.is_likely_to_change),
+            "mail_the_card_to_this_address": convert_to_bool(self.mail_the_card_to_this_address),
             "created_date":        self.created_date.strftime(
                 "%Y-%m-%d %H:%M:%S%z") if self.created_date else datetime.now(timezone.utc),
             "last_modified":       self.last_modified.strftime(
@@ -102,6 +106,7 @@ class Address(db.Model):
                f"city={self.city}, state={self.state}, zip={self.zip}, country={self.country}, " \
                f"full_addy={self.full_address}, is_current={self.is_current}, " \
                f"is_likely_to_change={self.is_likely_to_change}, " \
+               f"mail_the_card_to_this_address={self.mail_the_card_to_this_address}, " \
                f"created_date={self.created_date}, last_modified={self.last_modified})"
 
 
@@ -138,6 +143,9 @@ class Household(db.Model):
     #  Dr. Jane Doe & Mr. Nicholas Smith
     #  Dave & Pat Johnson
     formal_name = db.Column(db.String)
+
+    # Where do we know these people from?
+    known_from = db.Column(db.String)
 
     # How do we know these people?  Immediate Household, Grandparents, Aunts & Uncles, Cousins,
     # Childhood friends, Family friends, Work friends, Colleagues, Neighbors, Acquaintances, etc.
@@ -181,6 +189,7 @@ class Household(db.Model):
             "surname":                     self.surname,
             "address_to":                  self.address_to,
             "formal_name":                 self.formal_name,
+            "known_from":                  self.known_from,
             "relationship":                self.relationship,
             "relationship_type":           self.relationship_type,
             "family_side":                 self.family_side,
@@ -211,6 +220,7 @@ class Household(db.Model):
     def __repr__(self):
         return f"Household(id={self.id}, nick={self.nickname}, first={self.first_names}, " \
                f"surname={self.surname}, rel={self.relationship}, addr_to={self.address_to}" \
+               f"known_from={self.known_from}, " \
                f"rel_type={self.relationship_type}, family_side={self.family_side}, " \
                f"kids={self.kids}, pets={self.pets}, notes={self.notes}, " \
                f"should_receive_card={self.should_receive_holiday_card}, relevant={self.is_relevant}, " \
