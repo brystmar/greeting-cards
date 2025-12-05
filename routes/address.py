@@ -5,6 +5,7 @@ from backend import db
 from models.models import Address
 from flask import request
 from flask_restful import Resource, reqparse
+# from flask_cors import cross_origin
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 import json
 
@@ -21,6 +22,7 @@ class AddressCollectionApi(Resource):
     """
 
     @staticmethod
+    # @cross_origin()
     def get() -> json:
         """Return all addresses from the database"""
         logger.debug("Start of AddressCollectionAPI.GET")

@@ -18,6 +18,8 @@ class Config(object):
     # App-related variables
     APP_NAME = "greeting-cards"
     BOUND_PORT = environ.get("BACKEND_PORT")
+    logger.debug("Bound port: %s", BOUND_PORT)
+    CORS_HEADERS = "Content-Type"
     WHITELISTED_ORIGIN = environ.get("WHITELISTED_ORIGIN")
     WHITELISTED_ORIGINS = environ.get("WHITELISTED_ORIGINS")
     # TODO: Determine which variable is actually needed

@@ -15,6 +15,9 @@ from flask_cors import CORS
 # App components
 from backend import create_app
 
+# Enable CORS logging
+# getLogger('flask_cors').level = DEBUG
+
 # Initialize the Flask app
 logger.debug("About to initialize the Flask app")
 app = create_app()
@@ -27,9 +30,6 @@ from routes.event import EventCollectionApi, EventApi
 from routes.gift import GiftCollectionApi, GiftApi
 from routes.card import CardCollectionApi, CardApi
 from routes.picklists import PicklistValuesApi
-
-# Enable CORS logging
-# getLogger('flask_cors').level = DEBUG
 
 # Since this will only ever be a locally-run app, allow CORS for all domains on all routes
 # https://flask-cors.readthedocs.io/en/latest/
@@ -54,7 +54,13 @@ api.add_resource(CardCollectionApi, "/api/v1/all_cards")
 api.add_resource(PicklistValuesApi, "/api/v1/picklist_values")
 logger.debug("Functional endpoints added")
 
-if __name__ == "__main__" and is_running_locally:
+# More CORS button-mashing
+# @app.after_request
+# def add_header(response):
+#     response.headers.add('Access-Control-Allow-Origin', '*')
+#     return response
+
+if __name__ == "__main__":  # and is_running_locally:
     from backend.config import Config
 
     app.run(host="localhost", port=Config.BOUND_PORT, debug=True)
