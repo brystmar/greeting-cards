@@ -30,8 +30,8 @@ class Config(object):
         logger.warning("Error loading SECRET_KEY! Temporarily using a hard-coded key.")
 
     # Database
-    SQLALCHEMY_DATABASE_URI_DEV = environ.get("SQLALCHEMY_DATABASE_URI_DEV")
-    SQLALCHEMY_DATABASE_URI_PROD = environ.get("SQLALCHEMY_DATABASE_URI_PROD")
+    # SQLALCHEMY_DATABASE_URI_DEV = environ.get("SQLALCHEMY_DATABASE_URI_DEV")
+    # SQLALCHEMY_DATABASE_URI_PROD = environ.get("SQLALCHEMY_DATABASE_URI_PROD")
     POSTGRES_DB_CONNECTION = environ.get("POSTGRES_DB_CONNECTION")
     POSTGRES_DB_CONNECTION_DEV = environ.get("POSTGRES_DB_CONNECTION_DEV")
 
