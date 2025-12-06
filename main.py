@@ -60,9 +60,12 @@ logger.debug("Functional endpoints added")
 #     response.headers.add('Access-Control-Allow-Origin', '*')
 #     return response
 
-if __name__ == "__main__":  # and is_running_locally:
-    from backend.config import Config
+from backend.config import Config
+app.run(host=Config.HOST_ADDRESS, port=Config.BOUND_PORT, debug=Config.DEBUG_ENABLED)
 
-    app.run(host="localhost", port=Config.BOUND_PORT, debug=True)
-    logger.info(f"Running locally via __main__: http://localhost:{Config.BOUND_PORT}")
-    print(f"Running locally via __main__: http://localhost:{Config.BOUND_PORT}")
+# if __name__ == "__main__":  # and is_running_locally:
+#     from backend.config import Config
+#
+#     app.run(host="localhost", port=Config.BOUND_PORT, debug=True)
+#     logger.info(f"Running locally via __main__: http://localhost:{Config.BOUND_PORT}")
+#     print(f"Running locally via __main__: http://localhost:{Config.BOUND_PORT}")

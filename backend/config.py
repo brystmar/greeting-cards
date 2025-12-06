@@ -17,6 +17,8 @@ class Config(object):
 
     # App-related variables
     APP_NAME = "greeting-cards"
+    HOST_ADDRESS = environ.get("HOST_ADDRESS")
+    DEBUG_ENABLED = environ.get("DEBUG_ENABLED")
     BOUND_PORT = environ.get("BACKEND_PORT")
     logger.debug("Bound port: %s", BOUND_PORT)
     CORS_HEADERS = "Content-Type"
