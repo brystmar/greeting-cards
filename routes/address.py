@@ -3,7 +3,7 @@ from logging import getLogger
 from datetime import datetime, timezone
 from backend import db
 from models.models import Address
-from flask import request
+from flask import request, jsonify
 from flask_restful import Resource, reqparse
 # from flask_cors import cross_origin
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
@@ -26,24 +26,26 @@ class AddressCollectionApi(Resource):
     def get() -> json:
         """Return all addresses from the database"""
         logger.debug("Start of AddressCollectionAPI.GET")
+        print("Start of AddressCollectionAPI.GET")
         logger.debug(request)
 
         # Retrieve all addresses from the db, sorted by id
         try:
             addresses = Address.query.order_by(Address.id).all()
             logger.info("Addresses retrieved successfully!")
+            print("Addresses retrieved successfully!")
 
         except SQLAlchemyError as e:
             error_msg = f"SQLAlchemyError retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of AddressCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": str(error_msg)}), 500
 
         except BaseException as e:
             error_msg = f"BaseException retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of AddressCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": str(error_msg)}), 500
 
         # Compile these data into a list
         try:
@@ -58,7 +60,7 @@ class AddressCollectionApi(Resource):
             error_msg = f"Error compiling data into a list of `dict` to return: {e}"
             logger.info(error_msg)
             logger.debug("End of AddressCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": str(error_msg)}), 500
 
 
 class AddressApi(Resource):
