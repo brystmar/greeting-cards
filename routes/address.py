@@ -5,7 +5,7 @@ from backend import db
 from models.models import Address
 from flask import request, jsonify
 from flask_restful import Resource, reqparse
-# from flask_cors import cross_origin
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 import json
 
@@ -31,7 +31,8 @@ class AddressCollectionApi(Resource):
 
         # Retrieve all addresses from the db, sorted by id
         try:
-            addresses = Address.query.order_by(Address.id).all()
+            query = select(Address).order_by(Address.id.desc())
+            addresses = db.session.execute(query).scalars().all()
             logger.info("Addresses retrieved successfully!")
             print("Addresses retrieved successfully!")
 
@@ -87,7 +88,9 @@ class AddressApi(Resource):
 
         # Retrieve the selected record
         try:
-            address = Address.query.get(address_id)
+            # address = Address.query.get(address_id)
+            query = select(Address).where(Address.id == address_id)
+            address = db.session.execute(query).scalar_one_or_none()
 
             if address:
                 # Record successfully returned from the db
@@ -178,7 +181,9 @@ class AddressApi(Resource):
 
         try:
             # Retrieve the specified address record
-            address = Address.query.get(args["id"])
+            # address = Address.query.get(args["id"])
+            query = select(Address).where(Address.id == args["id"])
+            address = db.session.execute(query).scalar_one_or_none()
 
             # Update this record with the provided data
             address.households = args["households"]
@@ -235,7 +240,9 @@ class AddressApi(Resource):
 
         # Retrieve the selected record
         try:
-            address = Address.query.get(address_id)
+            # address = Address.query.get(address_id)
+            query = select(Address).where(Address.id == address_id)
+            address = db.session.execute(query).scalar_one_or_none()
 
             if address:
                 # Record successfully returned from the db
