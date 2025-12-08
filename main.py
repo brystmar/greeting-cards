@@ -15,9 +15,6 @@ from flask_cors import CORS
 # App components
 from backend import create_app
 
-# Enable CORS logging
-# getLogger('flask_cors').level = DEBUG
-
 # Initialize the Flask app
 logger.debug("About to initialize the Flask app")
 app = create_app()
@@ -60,12 +57,9 @@ logger.debug("Functional endpoints added")
 #     response.headers.add('Access-Control-Allow-Origin', '*')
 #     return response
 
-# from backend.config import Config
-# app.run(host=Config.HOST_ADDRESS, port=Config.BOUND_PORT, debug=Config.DEBUG_ENABLED)
+if __name__ == "__main__":
+    from backend.config import Config
 
-# if __name__ == "__main__":  # and is_running_locally:
-#     from backend.config import Config
-#
-#     app.run(host="localhost", port=Config.BOUND_PORT, debug=True)
-#     logger.info(f"Running locally via __main__: http://localhost:{Config.BOUND_PORT}")
-#     print(f"Running locally via __main__: http://localhost:{Config.BOUND_PORT}")
+    app.run(host=Config.HOST_ADDRESS, port=Config.BOUND_PORT, debug=Config.DEBUG_ENABLED)
+    logger.info(f"Running locally via __main__: http://localhost:{Config.BOUND_PORT}")
+    print(f"Running locally via __main__: http://localhost:{Config.BOUND_PORT}")

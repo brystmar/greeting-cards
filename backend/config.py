@@ -2,6 +2,8 @@
 from logging import getLogger
 from os import environ, path
 
+from helpers.helpers import scrub_password_from_database_uri
+
 logger = getLogger()
 
 
@@ -17,10 +19,11 @@ class Config(object):
 
     # App-related variables
     APP_NAME = "greeting-cards"
-    HOST_ADDRESS = environ.get("HOST_ADDRESS")
-    DEBUG_ENABLED = environ.get("DEBUG_ENABLED")
-    BOUND_PORT = environ.get("BACKEND_PORT")
-    logger.debug("Bound port: %s", BOUND_PORT)
+    HOST_ADDRESS = environ.get("HOST_ADDRESS", "localhost")
+    DEBUG_ENABLED = environ.get("DEBUG_ENABLED", "False").lower() == "true"
+    BOUND_PORT = int(environ.get("BACKEND_PORT", 5001))
+    logger.debug(f"Backend configured for http://{HOST_ADDRESS}:{BOUND_PORT}")
+
     CORS_HEADERS = "Content-Type"
     WHITELISTED_ORIGIN = environ.get("WHITELISTED_ORIGIN")
     WHITELISTED_ORIGINS = environ.get("WHITELISTED_ORIGINS")
@@ -32,20 +35,17 @@ class Config(object):
         logger.warning("Error loading SECRET_KEY! Temporarily using a hard-coded key.")
 
     # Database
-    # SQLALCHEMY_DATABASE_URI_DEV = environ.get("SQLALCHEMY_DATABASE_URI_DEV")
-    # SQLALCHEMY_DATABASE_URI_PROD = environ.get("SQLALCHEMY_DATABASE_URI_PROD")
     POSTGRES_DB_CONNECTION = environ.get("POSTGRES_DB_CONNECTION")
     POSTGRES_DB_CONNECTION_DEV = environ.get("POSTGRES_DB_CONNECTION_DEV")
 
-    # POSTGRES_DB_USERNAME = environ.get("POSTGRES_DB_USERNAME")
-    # POSTGRES_DB_PASSWORD = environ.get("POSTGRES_DB_PASSWORD")
-    # POSTGRES_DB_PORT = environ.get("POSTGRES_DB_PORT")
-
-    # Use the dev database when debug mode is enabled
-    SQLALCHEMY_DATABASE_URI = POSTGRES_DB_CONNECTION_DEV
-    # SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI_DEV
-    # SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI_PROD
-    logger.debug(f"SQLAlchemy db URI: {SQLALCHEMY_DATABASE_URI}")
+    # Determine which database to connect to: dev or prod
+    USE_PROD_DATABASE = environ.get("USE_PROD_DATABASE", "False").lower() == "true"
+    if USE_PROD_DATABASE:
+        SQLALCHEMY_DATABASE_URI = POSTGRES_DB_CONNECTION
+        logger.debug(f"Connecting to Production database: {scrub_password_from_database_uri(SQLALCHEMY_DATABASE_URI)}")
+    else:
+        SQLALCHEMY_DATABASE_URI = POSTGRES_DB_CONNECTION_DEV
+        logger.debug(f"Connecting to Development database: {scrub_password_from_database_uri(SQLALCHEMY_DATABASE_URI)}")
 
     # Should SQLAlchemy send a notification to the app every time an object changes?
     SQLALCHEMY_TRACK_MODIFICATIONS = False
