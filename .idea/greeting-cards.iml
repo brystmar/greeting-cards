@@ -6,8 +6,11 @@
       <excludeFolder url="file://$MODULE_DIR$/.idea/dataSources" />
       <excludeFolder url="file://$MODULE_DIR$/logs" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv313" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv314" />
+      <excludeFolder url="file://$MODULE_DIR$/instance" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.14 (greeting-cards) (2)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.13 (greeting-cards)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
