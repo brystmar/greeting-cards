@@ -31,10 +31,9 @@ class AddressCollectionApi(Resource):
 
         # Retrieve all addresses from the db, sorted by id
         try:
-            query = select(Address).order_by(Address.id.desc())
+            query = select(Address).order_by(Address.id.asc())
             addresses = db.session.execute(query).scalars().all()
-            logger.info("Addresses retrieved successfully!")
-            print("Addresses retrieved successfully!")
+            logger.info(f"Successfully retrieved data for {addresses.__len__()} addresses.")
 
         except SQLAlchemyError as e:
             error_msg = f"SQLAlchemyError retrieving data: {e}"
@@ -90,7 +89,7 @@ class AddressApi(Resource):
         try:
             # address = Address.query.get(address_id)
             query = select(Address).where(Address.id == address_id)
-            address = db.session.execute(query).scalar_one_or_none()
+            address = db.session.execute(query).scalar_one()
 
             if address:
                 # Record successfully returned from the db
@@ -183,7 +182,7 @@ class AddressApi(Resource):
             # Retrieve the specified address record
             # address = Address.query.get(args["id"])
             query = select(Address).where(Address.id == args["id"])
-            address = db.session.execute(query).scalar_one_or_none()
+            address = db.session.execute(query).scalar_one()
 
             # Update this record with the provided data
             address.households = args["households"]
@@ -242,12 +241,12 @@ class AddressApi(Resource):
         try:
             # address = Address.query.get(address_id)
             query = select(Address).where(Address.id == address_id)
-            address = db.session.execute(query).scalar_one_or_none()
+            address_to_delete = db.session.execute(query).scalar_one()
 
-            if address:
+            if address_to_delete:
                 # Record successfully returned from the db
                 logger.debug(f"Address record found, attempting to delete it.")
-                address.delete()
+                address_to_delete.delete()
 
                 logger.debug("About to commit this DELETE to the db.")
                 db.session.commit()
@@ -255,7 +254,7 @@ class AddressApi(Resource):
                 logger.info("Address record successfully deleted.")
 
                 logger.debug(f"End of AddressAPI.DELETE")
-                return address.to_dict(), 200
+                return address_to_delete.to_dict(), 200
             else:
                 # No record with this id exists in the db
                 error_msg = f"No record found for address id={address_id}."

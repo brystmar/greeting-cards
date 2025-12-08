@@ -5,6 +5,7 @@ from backend import db
 from models.models import Event
 from flask import request, jsonify
 from flask_restful import Resource, reqparse
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 import json
 
@@ -28,8 +29,10 @@ class EventCollectionApi(Resource):
 
         # Retrieve all events from the db, sorted by id
         try:
-            events = Event.query.order_by(Event.id).all()
-            logger.info("Events retrieved successfully!")
+            # events = Event.query.order_by(Event.id).all()
+            query = select(Event).order_by(Event.id.asc())
+            events = db.session.execute(query).scalars().all()
+            logger.info(f"Successfully retrieved data for {events.__len__()} events.")
 
         except SQLAlchemyError as e:
             error_msg = f"SQLAlchemyError retrieving data: {e}"
@@ -90,7 +93,9 @@ class EventApi(Resource):
 
         # Retrieve the selected record
         try:
-            event = Event.query.get(event_id)
+            # event = Event.query.get(event_id)
+            query = select(Event).where(Event.id == event_id)
+            event = db.session.execute(query).scalar_one()
 
             if event:
                 # Record successfully returned from the db
@@ -177,7 +182,9 @@ class EventApi(Resource):
 
         try:
             # Retrieve the specified event record
-            event = Event.query.get(event_id)
+            # event = Event.query.get(event_id)
+            query = select(Event).where(Event.id == event_id)
+            event = db.session.execute(query).scalar_one()
 
             # Update this record with the provided data
             event.name = args["name"]
@@ -226,12 +233,14 @@ class EventApi(Resource):
 
         try:
             # Retrieve the selected record
-            event = Event.query.get(event_id)
+            # event_to_delete = Event.query.get(event_id)
+            query = select(Event).where(Event.id == event_id)
+            event_to_delete = db.session.execute(query).scalar_one()
 
-            if event:
+            if event_to_delete:
                 # Record successfully returned from the db
                 logger.debug(f"Event record found.  Attempting to delete it.")
-                event.delete()
+                event_to_delete.delete()
 
                 logger.debug("About to commit this delete to the db.")
                 db.session.commit()
@@ -239,7 +248,7 @@ class EventApi(Resource):
                 logger.info("Event record successfully deleted.")
 
                 logger.debug("End of EventAPI.GET")
-                return event.to_dict(), 200
+                return event_to_delete.to_dict(), 200
             else:
                 # No record with this id exists in the db
                 error_msg = f"No record found for event id={event_id}."

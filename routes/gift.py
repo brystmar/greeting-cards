@@ -5,6 +5,7 @@ from backend import db
 from models.models import Gift
 from flask import request, jsonify
 from flask_restful import Resource, reqparse
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 import json
 
@@ -28,8 +29,10 @@ class GiftCollectionApi(Resource):
 
         # Retrieve all gifts from the db, sorted by id
         try:
-            gifts = Gift.query.order_by(Gift.id).all()
-            logger.info("Gifts retrieved successfully!")
+            # gifts = Gift.query.order_by(Gift.id).all()
+            query = select(Gift).order_by(Gift.id.asc())
+            gifts = db.session.execute(query).scalars().all()
+            logger.info(f"Successfully retrieved data for {gifts.__len__()} gifts.")
 
         except SQLAlchemyError as e:
             error_msg = f"SQLAlchemyError retrieving data: {e}"
@@ -90,7 +93,9 @@ class GiftApi(Resource):
 
         # Retrieve the selected record
         try:
-            gift = Gift.query.get(gift_id)
+            # gift = Gift.query.get(gift_id)
+            query = select(Gift).where(Gift.id == gift_id)
+            gift = db.session.execute(query).scalar_one()
 
             if gift:
                 # Record successfully returned from the db
@@ -182,7 +187,9 @@ class GiftApi(Resource):
 
         try:
             # Retrieve the specified gift record
-            gift = Gift.query.get(gift_id)
+            # gift = Gift.query.get(gift_id)
+            query = select(Gift).where(Gift.id == gift_id)
+            gift = db.session.execute(query).scalar_one()
 
             # Update this record with the provided data
             gift.event_id = args["event_id"]
@@ -234,12 +241,14 @@ class GiftApi(Resource):
 
         try:
             # Retrieve the selected record
-            gift = Gift.query.get(gift_id)
+            # gift_to_delete = Gift.query.get(gift_id)
+            query = select(Gift).where(Gift.id == gift_id)
+            gift_to_delete = db.session.execute(query).scalar_one()
 
-            if gift:
+            if gift_to_delete:
                 # Record successfully returned from the db
                 logger.debug(f"Gift record found.  Attempting to delete it.")
-                gift.delete()
+                gift_to_delete.delete()
 
                 logger.debug("About to commit this delete to the db.")
                 db.session.commit()
@@ -247,7 +256,7 @@ class GiftApi(Resource):
                 logger.info("Gift record successfully deleted.")
 
                 logger.debug("End of GiftAPI.GET")
-                return gift.to_dict(), 200
+                return gift_to_delete.to_dict(), 200
             else:
                 # No record with this id exists in the db
                 error_msg = f"No record found for gift id={gift_id}."

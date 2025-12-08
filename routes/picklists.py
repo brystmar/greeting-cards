@@ -1,11 +1,11 @@
 """Provides the default picklist values for the front end to use in forms."""
 
 from logging import getLogger
-
 from flask import jsonify
-
+from backend import db
 from models.models import Picklists
 from flask_restful import Resource
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 import json
 
@@ -26,8 +26,10 @@ class PicklistValuesApi(Resource):
         # Retrieve the default picklist values from the db
         version_id = 1
         try:
-            values = Picklists.query.get(version_id)
-            logger.debug(f"Successfully read default picklist values for version={version_id}")
+            # values = Picklists.query.get(version_id)
+            query = select(Picklists).where(Picklists.version == version_id)
+            values = db.session.execute(query).scalar_one()
+            logger.debug(f"Successfully read default picklist values for version: {version_id}")
             return values.to_dict(), 200
 
         except (SQLAlchemyError, InvalidRequestError, NoResultFound, AttributeError) as e:

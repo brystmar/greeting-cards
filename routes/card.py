@@ -5,6 +5,7 @@ from backend import db
 from models.models import Card
 from flask import request, jsonify
 from flask_restful import Resource, reqparse
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 import json
 
@@ -28,8 +29,10 @@ class CardCollectionApi(Resource):
 
         # Retrieve all cards from the db, sorted by id
         try:
-            cards = Card.query.order_by(Card.id).all()
-            logger.info("cards retrieved successfully!")
+            # cards = Card.query.order_by(Card.id).all()
+            query = select(Card).order_by(Card.id.asc())
+            cards = db.session.execute(query).scalars().all()
+            logger.info(f"Successfully retrieved data for {cards.__len__()} cards.")
 
         except SQLAlchemyError as e:
             error_msg = f"SQLAlchemyError retrieving data: {e}"
@@ -90,7 +93,9 @@ class CardApi(Resource):
 
         # Retrieve the selected record
         try:
-            card = Card.query.get(card_id)
+            # card = Card.query.get(card_id)
+            query = select(Card).where(Card.id == card_id)
+            card = db.session.execute(query).scalar_one()
 
             if card:
                 # Record successfully returned from the db
@@ -196,7 +201,9 @@ class CardApi(Resource):
 
         try:
             # Retrieve the specified card record
-            card = Card.query.get(card_id)
+            # card = Card.query.get(card_id)
+            query = select(Card).where(Card.id == card_id)
+            card = db.session.execute(query).scalar_one()
 
             # Update this record with the provided data
             card.type = args["type"]
@@ -255,12 +262,14 @@ class CardApi(Resource):
 
         try:
             # Retrieve the selected record
-            card = Card.query.get(card_id)
+            # card_to_delete = Card.query.get(card_id)
+            query = select(Card).where(Card.id == card_id)
+            card_to_delete = db.session.execute(query).scalar_one()
 
-            if card:
+            if card_to_delete:
                 # Record successfully returned from the db
                 logger.debug(f"Card record found.  Attempting to delete it.")
-                card.delete()
+                card_to_delete.delete()
 
                 logger.debug("About to commit this delete to the db.")
                 db.session.commit()
@@ -268,7 +277,7 @@ class CardApi(Resource):
                 logger.info("Card record successfully deleted.")
 
                 logger.debug("End of CardAPI.GET")
-                return card.to_dict(), 200
+                return card_to_delete.to_dict(), 200
             else:
                 # No record with this id exists in the db
                 error_msg = f"No record found for card id={card_id}."

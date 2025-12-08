@@ -7,6 +7,7 @@ from backend import db
 from models.models import Household
 from flask import request, jsonify
 from flask_restful import Resource, reqparse
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 from datetime import datetime, timezone
 import json
@@ -54,7 +55,9 @@ class HouseholdCollectionApi(Resource):
 
         # Retrieve all households from the db, sorted by id
         try:
-            households = Household.query.order_by(Household.id).all()
+            # households = Household.query.order_by(Household.id).all()
+            query = select(Household).order_by(Household.id.asc())
+            households = db.session.execute(query).scalars().all()
             logger.info(f"Successfully retrieved data for {households.__len__()} households.")
 
         except SQLAlchemyError as e:
@@ -117,7 +120,9 @@ class HouseholdApi(Resource):
 
         # Retrieve the selected record
         try:
-            household = Household.query.get(household_id)
+            # household = Household.query.get(household_id)
+            query = select(Household).where(Household.id == household_id)
+            household = db.session.execute(query).scalar_one()
 
             if household:
                 # Record successfully returned from the db
@@ -231,7 +236,9 @@ class HouseholdApi(Resource):
 
         try:
             # Retrieve the specified household record
-            household = Household.query.get(household_id)
+            # household = Household.query.get(household_id)
+            query = select(Household).where(Household.id == household_id)
+            household = db.session.execute(query).scalar_one()
 
             # Update this record with the provided data
             household.nickname = args["nickname"]
@@ -294,7 +301,9 @@ class HouseholdApi(Resource):
 
         try:
             # Retrieve the selected record
-            household_to_delete = Household.query.get(household_id)
+            # household_to_delete = Household.query.get(household_id)
+            query = select(Household).where(Household.id == household_id)
+            household_to_delete = db.session.execute(query).scalar_one()
 
             if household_to_delete:
                 # Record successfully returned from the db
