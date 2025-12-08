@@ -3,7 +3,7 @@ from logging import getLogger
 from datetime import date
 from backend import db
 from models.models import Gift
-from flask import request
+from flask import request, jsonify
 from flask_restful import Resource, reqparse
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 import json
@@ -35,13 +35,13 @@ class GiftCollectionApi(Resource):
             error_msg = f"SQLAlchemyError retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of GiftCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
         except BaseException as e:
             error_msg = f"BaseException retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of GiftCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
         # Compile these data into a list
         try:
@@ -56,7 +56,7 @@ class GiftCollectionApi(Resource):
             error_msg = f"Error compiling data into a list of `dict` to return: {e}"
             logger.info(error_msg)
             logger.debug("End of GiftCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
 
 class GiftApi(Resource):
@@ -86,7 +86,7 @@ class GiftApi(Resource):
         except KeyError as e:
             error_msg = f"Error parsing gift id: no value was provided. {e}"
             logger.info(error_msg)
-            return error_msg, 400
+            return jsonify({"error": error_msg}, status=400)
 
         # Retrieve the selected record
         try:
@@ -102,13 +102,13 @@ class GiftApi(Resource):
                 error_msg = f"No records found for gift id={gift_id}."
                 logger.debug(error_msg)
                 logger.debug("End of GiftAPI.GET")
-                return error_msg, 404
+                return jsonify({"error": error_msg}, status=404)
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No records found for gift id={gift_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of GiftAPI.GET")
-            return error_msg, 404
+            return jsonify({"error": error_msg}, status=404)
 
     @staticmethod
     def post() -> json:
@@ -149,7 +149,7 @@ class GiftApi(Resource):
             error_msg = f"Unable to create a new Gift record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of GiftAPI.POST")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
     @staticmethod
     def put() -> json:
@@ -178,7 +178,7 @@ class GiftApi(Resource):
         except KeyError as e:
             error_msg = f"Error parsing gift id: no value was provided. {e}"
             logger.info(error_msg)
-            return error_msg, 400
+            return jsonify({"error": error_msg}, status=400)
 
         try:
             # Retrieve the specified gift record
@@ -206,7 +206,7 @@ class GiftApi(Resource):
             error_msg = f"Unable to update Gift record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of GiftAPI.PUT")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
     @staticmethod
     def delete() -> json:
@@ -230,7 +230,7 @@ class GiftApi(Resource):
             error_msg = f"Error parsing gift id: no value was provided. {e}"
             logger.info(error_msg)
             logger.debug(f"End of GiftAPI.DELETE")
-            return error_msg, 400
+            return jsonify({"error": error_msg}, status=400)
 
         try:
             # Retrieve the selected record
@@ -253,10 +253,10 @@ class GiftApi(Resource):
                 error_msg = f"No record found for gift id={gift_id}."
                 logger.debug(error_msg)
                 logger.debug("End of GiftAPI.GET")
-                return error_msg, 404
+                return jsonify({"error": error_msg}, status=404)
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No record found for gift id={gift_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of GiftAPI.GET")
-            return error_msg, 404
+            return jsonify({"error": error_msg}, status=404)

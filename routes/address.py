@@ -40,13 +40,13 @@ class AddressCollectionApi(Resource):
             error_msg = f"SQLAlchemyError retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of AddressCollectionAPI.GET")
-            return jsonify({"error": str(error_msg)}), 500
+            return jsonify({"error": error_msg}, status=500)
 
         except BaseException as e:
             error_msg = f"BaseException retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of AddressCollectionAPI.GET")
-            return jsonify({"error": str(error_msg)}), 500
+            return jsonify({"error": error_msg}, status=500)
 
         # Compile these data into a list
         try:
@@ -61,7 +61,7 @@ class AddressCollectionApi(Resource):
             error_msg = f"Error compiling data into a list of `dict` to return: {e}"
             logger.info(error_msg)
             logger.debug("End of AddressCollectionAPI.GET")
-            return jsonify({"error": str(error_msg)}), 500
+            return jsonify({"error": error_msg}, status=500)
 
 
 class AddressApi(Resource):
@@ -102,13 +102,13 @@ class AddressApi(Resource):
                 error_msg = f"No records found for address id={address_id}."
                 logger.info(error_msg)
                 logger.debug("End of AddressAPI.GET")
-                return error_msg, 404
+                return jsonify({"error": error_msg}, status=404)
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No records found for address id={address_id}.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.GET")
-            return error_msg, 404
+            return jsonify({"error": error_msg}, status=404)
 
     @staticmethod
     def post() -> json:
@@ -154,7 +154,7 @@ class AddressApi(Resource):
             error_msg = f"Unable to create a new Address record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of AddressAPI.POST")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
     @staticmethod
     def put() -> json:
@@ -212,7 +212,7 @@ class AddressApi(Resource):
             error_msg = f"Unable to update Address record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of AddressAPI.PUT")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
     @staticmethod
     def delete() -> json:
@@ -236,7 +236,7 @@ class AddressApi(Resource):
             error_msg = f"Error parsing `id`: no value was provided. {e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.DELETE")
-            return error_msg, 400
+            return jsonify({"error": error_msg}, status=400)
 
         # Retrieve the selected record
         try:
@@ -261,16 +261,16 @@ class AddressApi(Resource):
                 error_msg = f"No record found for address id={address_id}."
                 logger.info(error_msg)
                 logger.debug(f"End of AddressAPI.DELETE")
-                return error_msg, 404
+                return jsonify({"error": error_msg}, status=404)
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No record found for address id={address_id}.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.DELETE")
-            return error_msg, 404
+            return jsonify({"error": error_msg}, status=404)
 
         except SQLAlchemyError as e:
             error_msg = f"SQLAlchemy error when attempting to delete address id={address_id}.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.DELETE")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)

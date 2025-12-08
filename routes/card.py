@@ -3,7 +3,7 @@ from logging import getLogger
 from datetime import date, datetime, timezone
 from backend import db
 from models.models import Card
-from flask import request
+from flask import request, jsonify
 from flask_restful import Resource, reqparse
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 import json
@@ -35,13 +35,13 @@ class CardCollectionApi(Resource):
             error_msg = f"SQLAlchemyError retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of CardCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
         except BaseException as e:
             error_msg = f"BaseException retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of CardCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
         # Compile these data into a list
         try:
@@ -56,7 +56,7 @@ class CardCollectionApi(Resource):
             error_msg = f"Error compiling data into a list of `dict` to return: {e}"
             logger.info(error_msg)
             logger.debug("End of CardCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
 
 class CardApi(Resource):
@@ -86,7 +86,7 @@ class CardApi(Resource):
         except KeyError as e:
             error_msg = f"Error parsing card id: no value was provided. {e}"
             logger.info(error_msg)
-            return error_msg, 400
+            return jsonify({"error": error_msg}, status=400)
 
         # Retrieve the selected record
         try:
@@ -99,15 +99,16 @@ class CardApi(Resource):
                 return card.to_dict(), 200
             else:
                 # No record with this id exists in the db
-                logger.debug(f"No records found for card id={card_id}.")
+                error_msg = f"No records found for card id={card_id}."
+                logger.debug(error_msg)
                 logger.debug("End of CardAPI.GET")
-                return f"No records found for card id={card_id}.", 404
+                return jsonify({"error": error_msg}, status=404)
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No records found for card id={card_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of CardAPI.GET")
-            return error_msg, 404
+            return jsonify({"error": error_msg}, status=404)
 
     @staticmethod
     def post() -> json:
@@ -139,7 +140,7 @@ class CardApi(Resource):
             error_msg = f"Unable to create a new Card record.\n{e}."
             logger.info(error_msg)
             logger.debug("End of CardAPI.POST")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
         # If the new card's status is "Sent" and no value was provided for `date_sent`, set
         # the `date_sent` attribute to today.
@@ -160,7 +161,7 @@ class CardApi(Resource):
             error_msg = f"Unable to create a new Card record.\n{e}"
             logger.info(error_msg)
             logger.debug("End of CardAPI.POST")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
     @staticmethod
     def put() -> json:
@@ -191,7 +192,7 @@ class CardApi(Resource):
             error_msg = f"Error parsing card id: no value was provided. {e}"
             logger.info(error_msg)
             logger.debug("End of CardAPI.PUT")
-            return error_msg, 400
+            return jsonify({"error": error_msg}, status=400)
 
         try:
             # Retrieve the specified card record
@@ -226,7 +227,7 @@ class CardApi(Resource):
             error_msg = f"Unable to update Card record.\n{e}"
             logger.info(error_msg)
             logger.debug("End of CardAPI.PUT")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
     @staticmethod
     def delete() -> json:
@@ -250,7 +251,7 @@ class CardApi(Resource):
             error_msg = f"Error parsing card id: no value was provided. {e}"
             logger.info(error_msg)
             logger.debug(f"End of CardAPI.DELETE")
-            return error_msg, 400
+            return jsonify({"error": error_msg}, status=400)
 
         try:
             # Retrieve the selected record
@@ -273,10 +274,10 @@ class CardApi(Resource):
                 error_msg = f"No record found for card id={card_id}."
                 logger.debug(error_msg)
                 logger.debug("End of CardAPI.GET")
-                return error_msg, 404
+                return jsonify({"error": error_msg}, status=404)
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No record found for card id={card_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of CardAPI.GET")
-            return error_msg, 404
+            return jsonify({"error": error_msg}, status=404)

@@ -3,7 +3,7 @@ from logging import getLogger
 from datetime import date
 from backend import db
 from models.models import Event
-from flask import request
+from flask import request, jsonify
 from flask_restful import Resource, reqparse
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
 import json
@@ -35,13 +35,13 @@ class EventCollectionApi(Resource):
             error_msg = f"SQLAlchemyError retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of EventCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
         except BaseException as e:
             error_msg = f"BaseException retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of EventCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
         # Compile these data into a list
         try:
@@ -56,7 +56,7 @@ class EventCollectionApi(Resource):
             error_msg = f"Error compiling data into a list of `dict` to return: {e}"
             logger.info(error_msg)
             logger.debug("End of EventCollectionAPI.GET")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
 
 class EventApi(Resource):
@@ -86,7 +86,7 @@ class EventApi(Resource):
         except KeyError as e:
             error_msg = f"Error parsing event id: no value was provided. {e}"
             logger.info(error_msg)
-            return error_msg, 400
+            return jsonify({"error": error_msg}, status=400)
 
         # Retrieve the selected record
         try:
@@ -102,13 +102,13 @@ class EventApi(Resource):
                 error_msg = f"No records found for event id={event_id}."
                 logger.debug(error_msg)
                 logger.debug("End of EventAPI.GET")
-                return error_msg, 404
+                return jsonify({"error": error_msg}, status=404)
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No records found for event id={event_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of EventAPI.GET")
-            return error_msg, 404
+            return jsonify({"error": error_msg}, status=404)
 
     @staticmethod
     def post() -> json:
@@ -146,7 +146,7 @@ class EventApi(Resource):
             error_msg = f"Unable to create a new Event record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of EventAPI.POST")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
     @staticmethod
     def put() -> json:
@@ -170,8 +170,10 @@ class EventApi(Resource):
             event_id = args["id"]
             logger.debug(f"Event id={event_id} was read successfully")
         except KeyError as e:
+            error_msg = f"Must provide a value for event id."
+            logger.debug(error_msg)
             logger.info(f"Error parsing event id: no value was provided. {e}")
-            return f"Must provide a value for event id.", 400
+            return jsonify({"error": error_msg}, status=400)
 
         try:
             # Retrieve the specified event record
@@ -196,7 +198,7 @@ class EventApi(Resource):
             error_msg = f"Unable to update Event record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of EventAPI.PUT")
-            return error_msg, 500
+            return jsonify({"error": error_msg}, status=500)
 
     @staticmethod
     def delete() -> json:
@@ -220,7 +222,7 @@ class EventApi(Resource):
             error_msg = f"Error parsing event id: no value was provided. {e}"
             logger.info(error_msg)
             logger.debug(f"End of EventAPI.DELETE")
-            return error_msg, 400
+            return jsonify({"error": error_msg}, status=400)
 
         try:
             # Retrieve the selected record
@@ -243,10 +245,10 @@ class EventApi(Resource):
                 error_msg = f"No record found for event id={event_id}."
                 logger.debug(error_msg)
                 logger.debug("End of EventAPI.GET")
-                return error_msg, 404
+                return jsonify({"error": error_msg}, status=404)
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No record found for event id={event_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of EventAPI.GET")
-            return error_msg, 404
+            return jsonify({"error": error_msg}, status=400)
