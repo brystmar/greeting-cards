@@ -25,8 +25,8 @@ class Config(object):
     logger.debug(f"Backend configured for http://{HOST_ADDRESS}:{BOUND_PORT}")
 
     CORS_HEADERS = "Content-Type"
-    WHITELISTED_ORIGIN = environ.get("WHITELISTED_ORIGIN")
-    WHITELISTED_ORIGINS = environ.get("WHITELISTED_ORIGINS")
+    # WHITELISTED_ORIGIN = environ.get("WHITELISTED_ORIGIN")
+    # WHITELISTED_ORIGINS = environ.get("WHITELISTED_ORIGINS")
     # TODO: Determine which variable is actually needed
 
     # Log a warning if the fallback secret key is used
@@ -43,9 +43,11 @@ class Config(object):
     if USE_PROD_DATABASE:
         SQLALCHEMY_DATABASE_URI = POSTGRES_DB_CONNECTION
         logger.debug(f"Connecting to Production database: {scrub_password_from_database_uri(SQLALCHEMY_DATABASE_URI)}")
+        print("Connecting to Prod database")
     else:
         SQLALCHEMY_DATABASE_URI = POSTGRES_DB_CONNECTION_DEV
         logger.debug(f"Connecting to Development database: {scrub_password_from_database_uri(SQLALCHEMY_DATABASE_URI)}")
+        print("Connecting to Dev database")
 
     # Should SQLAlchemy send a notification to the app every time an object changes?
     SQLALCHEMY_TRACK_MODIFICATIONS = False

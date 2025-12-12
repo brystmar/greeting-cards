@@ -48,4 +48,4 @@ def remove_milliseconds_from_datetime_string(text) -> str:
 
 def scrub_password_from_database_uri(uri: str) -> str:
     # Matches: postgresql://username:password@host/...
-    return sub(r'(postgresql://[^:]+:)([^@]+)(@)', r'\1(PASSWORD)\3', uri)
+    return sub(r'(postgresql\+psycopg://[^:]+:)([^@]+)(@)', r'\1DB_PW\3', uri)
