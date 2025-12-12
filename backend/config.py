@@ -25,9 +25,7 @@ class Config(object):
     logger.debug(f"Backend configured for http://{HOST_ADDRESS}:{BOUND_PORT}")
 
     CORS_HEADERS = "Content-Type"
-    # WHITELISTED_ORIGIN = environ.get("WHITELISTED_ORIGIN")
-    # WHITELISTED_ORIGINS = environ.get("WHITELISTED_ORIGINS")
-    # TODO: Determine which variable is actually needed
+    WHITELISTED_ORIGINS = environ.get("WHITELISTED_ORIGINS")
 
     # Log a warning if the fallback secret key is used
     SECRET_KEY = environ.get("SECRET_KEY") or "wyKx4azY2YQ?R4J257fi@LkNVCBmkZgR1gwFWs!whsQ2V3YB"

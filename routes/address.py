@@ -12,7 +12,28 @@ import json
 logger = getLogger()
 
 # Initialize a parser for the request parameters
-parser = reqparse.RequestParser(trim=True)
+base_parser = reqparse.RequestParser(trim=True)
+
+# `id` is required for most requests
+base_parser.add_argument("id", type=int, nullable=False, required=True)
+
+def add_address_fields_to_parser(provided_parser) -> reqparse:
+    """Adds the remaining address-related fields to a given parser."""
+    logger.debug("Adding address fields to the parser")
+    provided_parser.add_argument("id", type=int, nullable=False, store_missing=False)
+    provided_parser.add_argument("household_id", type=int, nullable=False, required=True)
+    provided_parser.add_argument("line_1", type=str)
+    provided_parser.add_argument("line_2", type=str)
+    provided_parser.add_argument("city", type=str)
+    provided_parser.add_argument("state", type=str)
+    provided_parser.add_argument("zip", type=str)
+    provided_parser.add_argument("country", type=str, default="United States")
+    provided_parser.add_argument("is_current", type=str, default="True")
+    provided_parser.add_argument("is_likely_to_change", type=str, default="False")
+    provided_parser.add_argument("notes", type=str)
+
+    logger.debug("Done adding address fields to the parser")
+    return provided_parser
 
 
 class AddressCollectionApi(Resource):
@@ -26,7 +47,7 @@ class AddressCollectionApi(Resource):
     def get() -> json:
         """Return all addresses from the database"""
         logger.debug("Start of AddressCollectionAPI.GET")
-        print("Start of AddressCollectionAPI.GET")
+        # print("Start of AddressCollectionAPI.GET")
         logger.debug(request)
 
         # Retrieve all addresses from the db, sorted by id
@@ -76,11 +97,11 @@ class AddressApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("id", type=int, nullable=False, store_missing=False,
-                            required=True)
+        base_parser.add_argument("id", type=int, nullable=False, store_missing=False,
+                                 required=True)
 
         # Parse the provided arguments
-        args = parser.parse_args()
+        args = base_parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
         address_id = args["id"]
@@ -116,18 +137,18 @@ class AddressApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("id", type=int, nullable=False, required=True)
-        parser.add_argument("line_1", type=str)
-        parser.add_argument("line_2", type=str)
-        parser.add_argument("city", type=str)
-        parser.add_argument("state", type=str)
-        parser.add_argument("zip", type=str)
-        parser.add_argument("country", type=str, default="United States")
-        parser.add_argument("is_current", type=str, default="True")
-        parser.add_argument("is_likely_to_change", type=str, default="False")
+        base_parser.add_argument("id", type=int, nullable=False, required=True)
+        base_parser.add_argument("line_1", type=str)
+        base_parser.add_argument("line_2", type=str)
+        base_parser.add_argument("city", type=str)
+        base_parser.add_argument("state", type=str)
+        base_parser.add_argument("zip", type=str)
+        base_parser.add_argument("country", type=str, default="United States")
+        base_parser.add_argument("is_current", type=str, default="True")
+        base_parser.add_argument("is_likely_to_change", type=str, default="False")
 
         # Parse the arguments provided
-        args = parser.parse_args()
+        args = base_parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
         # Create a new Address record using the provided data
@@ -162,25 +183,28 @@ class AddressApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        parser.add_argument("id", type=int, nullable=False, store_missing=False)
-        parser.add_argument("household_id", type=int, nullable=False, required=True)
-        parser.add_argument("line_1", type=str)
-        parser.add_argument("line_2", type=str)
-        parser.add_argument("city", type=str)
-        parser.add_argument("state", type=str)
-        parser.add_argument("zip", type=str)
-        parser.add_argument("country", type=str, default="United States")
-        parser.add_argument("is_current", type=str, default="True")
-        parser.add_argument("is_likely_to_change", type=str, default="False")
-        parser.add_argument("notes", type=str)
+        parser = add_address_fields_to_parser(base_parser)
 
         # Parse the arguments provided
-        args = parser.parse_args()
-        logger.debug(f"Args parsed successfully: {args.__str__()}")
+        logger.debug("Attempting to parse the arguments")
+        try:
+            args = parser.parse_args()
+            logger.debug(f"Args parsed successfully: {args.__str__()}")
+        except BaseException as e:
+            error_msg = f"Unable to parse the arguments Address record.\n{e}"
+            logger.debug(error_msg)
+            logger.debug("End of AddressAPI.PUT")
+            return jsonify({"error": error_msg}, status=400)
+        except TypeError as e:
+            error_msg = f"Unable to parse the arguments Address record.\n{e}"
+            logger.debug(error_msg)
+            logger.debug("End of AddressAPI.PUT")
+            return jsonify({"error": error_msg}, status=400)
 
         try:
             # Retrieve the specified address record
             # address = Address.query.get(args["id"])
+            logger.debug(f"Attempting to query for address id={args.id}")
             query = select(Address).where(Address.id == args["id"])
             address = db.session.execute(query).scalar_one()
 
@@ -219,12 +243,8 @@ class AddressApi(Resource):
         logger.debug(f"Start of AddressAPI.DELETE")
         logger.debug(request)
 
-        # Define the parameters used by this endpoint
-        parser.add_argument("id", type=int, nullable=False, store_missing=False,
-                            required=True)
-
         # Parse the provided arguments
-        args = parser.parse_args()
+        args = base_parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
 
         # Validate that an address id was provided

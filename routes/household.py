@@ -165,6 +165,9 @@ class HouseholdApi(Resource):
             key: notes, type: str
         """
 
+        logger.debug("Start of HouseholdAPI.POST")
+        logger.debug(request)
+
         # Add the other household args to our parser
         parser = add_household_fields_to_parser(base_parser)
 
@@ -219,11 +222,16 @@ class HouseholdApi(Resource):
             key: should_receive_holiday_card, type: int
             key: notes, type: str
         """
+        logger.debug("Start of HouseholdAPI.PUT")
+        logger.debug(request)
+
         # Add the other household fields to the expected arguments
         parser = add_household_fields_to_parser(base_parser)
 
         # Parse the arguments provided
+        logger.debug("Attempting to parse the arguments")
         args = parser.parse_args()
+        logger.debug("Arguments parsed successfully")
 
         # Validate that a household_id was provided
         try:
@@ -284,6 +292,8 @@ class HouseholdApi(Resource):
         REQUIRED ARGUMENTS
             key: id, type: int
         """
+        logger.debug("Start of HouseholdAPI.DELETE")
+        logger.debug(request)
 
         # No need for additional parser args since the only required arg is `id`
         # Parse the arguments provided

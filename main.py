@@ -30,7 +30,7 @@ from routes.picklists import PicklistValuesApi
 
 # Since this will only ever be a locally-run app, allow CORS for all domains on all routes
 # https://flask-cors.readthedocs.io/en/latest/
-CORS(app)
+# CORS(app)
 
 # Initialize the API for our app
 api = Api(app)
