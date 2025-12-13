@@ -20,16 +20,14 @@ base_parser.add_argument("id", type=int, nullable=False, required=True)
 def add_address_fields_to_parser(provided_parser) -> reqparse:
     """Adds the remaining address-related fields to a given parser."""
     logger.debug("Adding address fields to the parser")
-    provided_parser.add_argument("id", type=int, nullable=False, store_missing=False)
-    provided_parser.add_argument("household_id", type=int, nullable=False, required=True)
     provided_parser.add_argument("line_1", type=str)
     provided_parser.add_argument("line_2", type=str)
     provided_parser.add_argument("city", type=str)
     provided_parser.add_argument("state", type=str)
     provided_parser.add_argument("zip", type=str)
     provided_parser.add_argument("country", type=str, default="United States")
-    provided_parser.add_argument("is_current", type=str, default="True")
-    provided_parser.add_argument("is_likely_to_change", type=str, default="False")
+    provided_parser.add_argument("is_current", type=str)
+    provided_parser.add_argument("is_likely_to_change", type=str)
     provided_parser.add_argument("notes", type=str)
 
     logger.debug("Done adding address fields to the parser")
@@ -209,7 +207,6 @@ class AddressApi(Resource):
             address = db.session.execute(query).scalar_one()
 
             # Update this record with the provided data
-            address.households = args["households"]
             address.line_1 = args["line_1"]
             address.line_2 = args["line_2"]
             address.city = args["city"]
@@ -220,7 +217,7 @@ class AddressApi(Resource):
             address.is_likely_to_change = args["is_likely_to_change"]
             address.notes = args["notes"]
 
-            # Update last_modified to the current timestamp
+            # Set last_modified to the current timestamp
             address.last_modified = datetime.now(timezone.utc)
 
             # Commit these changes to the db
