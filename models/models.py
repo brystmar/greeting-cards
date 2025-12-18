@@ -179,7 +179,7 @@ class Household(db.Model):
 
     # Easy SQLAlchemy backref for addresses which match this household
     addresses = db.relationship("Address", backref="household", lazy=True)
-    temp = datetime.now(timezone.utc)
+    # temp = datetime.now(timezone.utc)
 
     def to_dict(self):
         return {

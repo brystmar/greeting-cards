@@ -32,10 +32,12 @@ def add_household_fields_to_parser(provided_parser) -> reqparse:
     provided_parser.add_argument("formal_name", type=str)
     provided_parser.add_argument("relationship", type=str)
     provided_parser.add_argument("relationship_type", type=str)
+    provided_parser.add_argument("known_from", type=str)
     provided_parser.add_argument("family_side", type=str)
     provided_parser.add_argument("kids", type=str)
     provided_parser.add_argument("pets", type=str)
     provided_parser.add_argument("should_receive_holiday_card", type=str)
+    provided_parser.add_argument("is_relevant", type=str)
     provided_parser.add_argument("notes", type=str)
 
     logger.debug("Done adding household fields to the parser")
@@ -161,7 +163,8 @@ class HouseholdApi(Resource):
             key: family_side, type: str
             key: kids, type: str
             key: pets, type: str
-            key: should_receive_holiday_card, type: int
+            key: should_receive_holiday_card, type: str
+            key: is_relevant, type: str
             key: notes, type: str
         """
 
@@ -256,10 +259,12 @@ class HouseholdApi(Resource):
             household.formal_name = args["formal_name"]
             household.relationship = args["relationship"]
             household.relationship_type = args["relationship_type"]
+            household.known_from = args["known_from"]
             household.family_side = args["family_side"]
             household.kids = args["kids"]
             household.pets = args["pets"]
             household.should_receive_holiday_card = args["should_receive_holiday_card"]
+            household.is_relevant = args["is_relevant"]
             household.notes = args["notes"]
             household.last_modified = datetime.now(timezone.utc)
 
