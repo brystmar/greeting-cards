@@ -9,30 +9,27 @@ logger = getLogger()
 
 def convert_to_bool(input_data) -> bool:
     """Converts a given input to boolean"""
-    # logger.debug(f"Starting convert_to_bool({input}), type: {type(input)}")
-
-    output = input_data
+    # logger.debug(f"Starting convert_to_bool({input_data}), type: {type(input_data)}")
 
     if type(input_data) == bool:
         logger.debug(f"Input was already boolean.")
         return input_data
     elif type(input_data) == str:
         if input_data.lower() in ['true', '1', 't', 'y', 'yes']:
-            output = True
+            return True
         else:
-            output = False
+            return False
     elif type(input_data) == int:
         if input_data == 1:
-            output = True
+            return True
         else:
-            output = False
+            return False
     else:
         logger.warning(f"Unsupported type provided: {type(input_data)}")
         logger.warning(f"Setting value to False")
-        output = False
+        return False
 
     # logger.debug(f"Ending convert_to_bool, returning {output}")
-    return output
 
 
 def remove_milliseconds_from_datetime_string(text) -> str:

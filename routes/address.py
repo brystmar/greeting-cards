@@ -28,6 +28,7 @@ def add_address_fields_to_parser(provided_parser) -> reqparse:
     provided_parser.add_argument("country", type=str, default="United States")
     provided_parser.add_argument("is_current", type=str)
     provided_parser.add_argument("is_likely_to_change", type=str)
+    provided_parser.add_argument("mail_the_card_to_this_address", type=str)
     provided_parser.add_argument("notes", type=str)
 
     logger.debug("Done adding address fields to the parser")
@@ -144,6 +145,7 @@ class AddressApi(Resource):
         base_parser.add_argument("country", type=str, default="United States")
         base_parser.add_argument("is_current", type=str, default="True")
         base_parser.add_argument("is_likely_to_change", type=str, default="False")
+        base_parser.add_argument("mail_the_card_to_this_address", type=str, default="True")
 
         # Parse the arguments provided
         args = base_parser.parse_args()
@@ -215,6 +217,7 @@ class AddressApi(Resource):
             address.country = args["country"]
             address.is_current = args["is_current"]
             address.is_likely_to_change = args["is_likely_to_change"]
+            address.mail_the_card_to_this_address = args["mail_the_card_to_this_address"]
             address.notes = args["notes"]
 
             # Set last_modified to the current timestamp

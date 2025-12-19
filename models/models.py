@@ -94,12 +94,13 @@ class Address(db.Model):
             self.last_modified = now
 
         # For apartment-dwellers, override the default value for is_likely_to_change
-        if self.line_2 and "is_likely_to_change" not in kwargs.keys():
-            self.is_likely_to_change = True
+        # if self.line_2 and "is_likely_to_change" not in kwargs.keys():
+        #     self.is_likely_to_change = True
 
-        # Convert the provided values for is_current and is_likely_to_change to boolean
+        # Convert the provided values for checkbox fields to boolean
         self.is_current = convert_to_bool(self.is_current)
         self.is_likely_to_change = convert_to_bool(self.is_likely_to_change)
+        self.mail_the_card_to_this_address = convert_to_bool(self.mail_the_card_to_this_address)
 
     def __repr__(self):
         return f"Addy(id={self.id}, hh={self.household_id}, L1={self.line_1}, L2={self.line_1}, " \
@@ -196,7 +197,7 @@ class Household(db.Model):
             "kids":                        self.kids,
             "pets":                        self.pets,
             "should_receive_holiday_card": convert_to_bool(self.should_receive_holiday_card),
-            "is_relevant":                 self.is_relevant,
+            "is_relevant":                 convert_to_bool(self.is_relevant),
             "created_date":                self.created_date.strftime(
                 "%Y-%m-%d %H:%M:%S%z") if self.created_date else datetime.now(timezone.utc),
             "last_modified":               self.last_modified.strftime(
