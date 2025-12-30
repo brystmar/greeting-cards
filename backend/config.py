@@ -1,8 +1,8 @@
 """Defines the object to configure parameters for our Flask app."""
 from logging import getLogger
 from os import environ, path
-
 from helpers.helpers import scrub_password_from_database_uri
+import uuid
 
 logger = getLogger()
 
@@ -25,12 +25,13 @@ class Config(object):
     logger.debug(f"Backend configured for http://{HOST_ADDRESS}:{BOUND_PORT}")
 
     CORS_HEADERS = "Content-Type"
-    WHITELISTED_ORIGINS = environ.get("WHITELISTED_ORIGINS")
+    WHITELISTED_ORIGINS = environ.get("WHITELISTED_ORIGINS", "")
 
     # Log a warning if the fallback secret key is used
-    SECRET_KEY = environ.get("SECRET_KEY") or "wyKx4azY2YQ?R4J257fi@LkNVCBmkZgR1gwFWs!whsQ2V3YB"
-    if SECRET_KEY != environ.get("SECRET_KEY"):
-        logger.warning("Error loading SECRET_KEY! Temporarily using a hard-coded key.")
+    SECRET_KEY = environ.get("SECRET_KEY", "")
+    if SECRET_KEY != environ.get("SECRET_KEY") or SECRET_KEY == "":
+        SECRET_KEY = str(uuid.uuid4())
+        logger.warning(f"Error loading SECRET_KEY! Temporarily using this uuid instead: {SECRET_KEY}")
 
     # Database
     POSTGRES_DB_CONNECTION = environ.get("POSTGRES_DB_CONNECTION")
