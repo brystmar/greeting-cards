@@ -6,20 +6,19 @@ Defines our app using the create_app function in backend/__init__.py
 from root_logger import logger, is_running_locally
 
 # Built-in modules
-from logging import getLogger, DEBUG
+# from logging import getLogger, DEBUG
 
 # Third-party packages
 from flask_restful import Api
-from flask_cors import CORS
 
 # App components
 from backend import create_app
 
-# Initialize the Flask app
+### Initialize the Flask app ###
 logger.debug("About to initialize the Flask app")
 app = create_app()
 
-# Import our routes
+### Import our routes ###
 # Must be done after the app is initialized to avoid circular dependencies
 from routes.address import AddressCollectionApi, AddressApi
 from routes.household import HouseholdCollectionApi, HouseholdApi
@@ -32,7 +31,7 @@ from routes.picklists import PicklistValuesApi
 # https://flask-cors.readthedocs.io/en/latest/
 # CORS(app)
 
-# Initialize the API for our app
+### Initialize the API for our app ###
 api = Api(app)
 logger.info("Initialized the API for this Flask app")
 
@@ -50,12 +49,6 @@ api.add_resource(CardApi, "/api/v1/card")
 api.add_resource(CardCollectionApi, "/api/v1/all_cards")
 api.add_resource(PicklistValuesApi, "/api/v1/picklist_values")
 logger.debug("Functional endpoints added")
-
-# More CORS button-mashing
-# @app.after_request
-# def add_header(response):
-#     response.headers.add('Access-Control-Allow-Origin', '*')
-#     return response
 
 if __name__ == "__main__":
     from backend.config import Config

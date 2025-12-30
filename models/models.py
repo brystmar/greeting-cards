@@ -180,7 +180,6 @@ class Household(db.Model):
 
     # Easy SQLAlchemy backref for addresses which match this household
     addresses = db.relationship("Address", backref="household", lazy=True)
-    # temp = datetime.now(timezone.utc)
 
     def to_dict(self):
         return {
@@ -289,7 +288,6 @@ class Gift(db.Model):
     # Event that the gift was from
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
 
-    # TODO: Migrate to `households` array to support joint-household gifts
     # Household who gifted the item
     household_id = db.Column(db.Integer)
 
@@ -359,7 +357,6 @@ class Card(db.Model):
     status = db.Column(db.String, default="New", nullable=False)
 
     # If this is a thank-you card, which gift is this card for?
-    # TODO: Change to a 1-to-many relationship
     gift_id = db.Column(db.Integer, db.ForeignKey('gift.id'))
 
     # Which event is this for?
