@@ -154,6 +154,7 @@ class HouseholdApi(Resource):
             key: nickname, type: str
 
         OPTIONAL ARGUMENTS
+            key: id, type: int
             key: first_names, type: str
             key: surname, type: str
             key: address_to, type: str
@@ -175,7 +176,7 @@ class HouseholdApi(Resource):
         parser = add_household_fields_to_parser(base_parser)
 
         # Remove the `id` arg from our parser; the database will generate this
-        parser.remove_argument("id")
+        # parser.remove_argument("id")
         logger.debug(f"parser keys: {parser.args.__str__()}")
 
         # Parse the arguments provided
