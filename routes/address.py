@@ -95,10 +95,6 @@ class AddressApi(Resource):
         logger.debug(f"Start of AddressAPI.GET")
         logger.debug(request)
 
-        # Define the parameters used by this endpoint
-        base_parser.add_argument("id", type=int, nullable=False, store_missing=False,
-                                 required=True)
-
         # Parse the provided arguments
         args = base_parser.parse_args()
         logger.debug(f"Args parsed successfully: {args.__str__()}")
@@ -136,20 +132,23 @@ class AddressApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
-        base_parser.add_argument("id", type=int, nullable=False, required=True)
-        base_parser.add_argument("line_1", type=str)
-        base_parser.add_argument("line_2", type=str)
-        base_parser.add_argument("city", type=str)
-        base_parser.add_argument("state", type=str)
-        base_parser.add_argument("zip", type=str)
-        base_parser.add_argument("country", type=str, default="United States")
-        base_parser.add_argument("is_current", type=str, default="True")
-        base_parser.add_argument("is_likely_to_change", type=str, default="False")
-        base_parser.add_argument("mail_the_card_to_this_address", type=str, default="True")
+        parser = add_address_fields_to_parser(base_parser)
 
         # Parse the arguments provided
-        args = base_parser.parse_args()
-        logger.debug(f"Args parsed successfully: {args.__str__()}")
+        try:
+            logger.debug("Attempting to parse the arguments")
+            args = parser.parse_args()
+            logger.debug(f"Args parsed successfully: {args.__str__()}")
+        except BaseException as e:
+            error_msg = f"Unable to parse the address arguments.\n{e}"
+            logger.debug(error_msg)
+            logger.debug("End of AddressAPI.PUT")
+            return jsonify({"error": error_msg}, status=400)
+        except TypeError as e:
+            error_msg = f"Unable to parse the address arguments.\n{e}"
+            logger.debug(error_msg)
+            logger.debug("End of AddressAPI.PUT")
+            return jsonify({"error": error_msg}, status=400)
 
         # Create a new Address record using the provided data
         try:
@@ -161,12 +160,12 @@ class AddressApi(Resource):
             new_address.date_created = datetime.now(timezone.utc)
             new_address.last_modified = new_address.date_created
 
-            # Commit this new record so the db generates an id
+            # Commit this new record
             logger.debug("Attempting to commit data")
             db.session.commit()
             logger.debug("Commit completed")
 
-            # Return the newly created id to the requester
+            # Return the address id to the requester
             logger.debug("End of AddressAPI.POST")
             return new_address.id, 201
 

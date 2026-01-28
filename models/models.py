@@ -210,7 +210,7 @@ class Household(db.Model):
         # Ensure each record has created and last_modified dates
         if not self.created_date:
             now = datetime.now(timezone.utc)
-            logger.debug(f"No created_date found for address_id={self.id}.  Setting to {now}.")
+            logger.debug(f"No created_date found for hh_id={self.id}.  Setting to {now}.")
             self.created_date = now
             self.last_modified = now
 

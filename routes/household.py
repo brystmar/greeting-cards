@@ -4,7 +4,7 @@ Creates the household-related endpoints.
 
 from logging import getLogger
 from backend import db
-from models.models import Household
+from models.models import Household, Address
 from flask import request, jsonify
 from flask_restful import Resource, reqparse
 from sqlalchemy import select
@@ -167,6 +167,7 @@ class HouseholdApi(Resource):
             key: should_receive_holiday_card, type: str
             key: is_relevant, type: str
             key: notes, type: str
+            key: address_id, type: int
         """
 
         logger.debug("Start of HouseholdAPI.POST")
@@ -175,34 +176,61 @@ class HouseholdApi(Resource):
         # Add the other household args to our parser
         parser = add_household_fields_to_parser(base_parser)
 
+        # Automatically create a new, blank address record when a new hh is created, using the provided address_id
+        parser.add_argument("address_id", type=int)
+
         # Remove the `id` arg from our parser; the database will generate this
         # parser.remove_argument("id")
-        logger.debug(f"parser keys: {parser.args.__str__()}")
+        # logger.debug(f"parser keys: {parser.args.__str__()}")
 
-        # Parse the arguments provided
-        args = parser.parse_args()
-
-        # Create a new Household record using the provided data
         try:
+            # Parse the arguments provided
+            logger.debug("Attempting to parse args...")
+            args = parser.parse_args()
+            logger.debug(f"Parsed args successfully, new records will be hh_id={args.id}, address_id={args.address_id}")
+
+            # Create a new Household record using the provided data
             logger.debug(f"Attempting to create a Household from the provided data.")
+
+            # Prep the new (blank) Address record
+            blank_address = Address(id=args.address_id, household_id=args.id, country="United States",
+                                    is_current=True, is_likely_to_change=False, mail_the_card_to_this_address=True)
+
+            # Remove `address_id` from the args, since it doesn't exist in the Household data model
+            parser.remove_argument("address_id")
+            args = parser.parse_args()
+
+            # Prep the new Household record
             new_household = Household(**args)
+
+            # Add both to the database
             db.session.add(new_household)
+            db.session.add(blank_address)
+
+            # Flush the db
             db.session.flush()
-            logger.info(f"New record flushed has id={new_household.id}")
-            logger.debug(f"Added new household record to the db session")
+            logger.info(f"New household record flushed has id={new_household.id}")
+            logger.debug(f"Added new household & blank address records to the db session")
 
             # Commit this new record so the db generates an id
             logger.debug("Attempting to commit data")
             db.session.commit()
             logger.debug("Commit completed")
             logger.info(f"New record successfully created: {new_household.to_dict()}")
+            logger.info(f"New record successfully created: {blank_address.to_dict()}")
 
             # Return the household_id to the requester
             logger.debug("End of HouseholdAPI.POST")
             return new_household.id, 201
 
         except SQLAlchemyError as e:
-            error_msg = f"Unable to create a new Household record.\n{e}"
+            error_msg = f"Unable to create new record.\n{e}"
+            logger.debug(error_msg)
+            logger.debug("End of HouseholdAPI.POST")
+            return jsonify({"error": error_msg}, status=500)
+
+        except BaseException as e:
+            error_msg = f"Unable to create new record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of HouseholdAPI.POST")
             return jsonify({"error": error_msg}, status=500)
