@@ -353,8 +353,8 @@ class Card(db.Model):
     # What type of card is this?  Options: Thank You, Holiday, Greeting, Other
     type = db.Column(db.String)
 
-    # Defines the lifecycle status of this card: New --> Written --> Addressed --> Sent.
-    status = db.Column(db.String, default="New", nullable=False)
+    # Was this card returned to sender?
+    was_returned =  db.Column(db.String, default="False")
 
     # If this is a thank-you card, which gift is this card for?
     gift_id = db.Column(db.Integer, db.ForeignKey('gift.id'))
@@ -379,7 +379,7 @@ class Card(db.Model):
         return {
             "id":           self.id,
             "type":         self.type,
-            "status":       self.status,
+            "was_returned": self.was_returned,
             "gift_id":      self.gift_id,
             "event_id":     self.event_id,
             "household_id": self.household_id,
@@ -392,7 +392,7 @@ class Card(db.Model):
         super().__init__(**kwargs)
 
     def __repr__(self):
-        return f"Card(id={self.id}, type={self.type}, status={self.status}, " \
+        return f"Card(id={self.id}, type={self.type}, was_returned={self.was_returned}, " \
                f"event={self.event_id}, gift={self.gift_id}, hh={self.household_id}, " \
                f"address={self.address_id}, " \
                f"date_sent={self.date_sent.strftime('%Y-%m-%d') if self.date_sent else None}, " \
@@ -418,7 +418,6 @@ class Picklists(db.Model):
 
     # Card picklists
     card_type = db.Column(db.String)
-    card_status = db.Column(db.String)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -433,7 +432,6 @@ class Picklists(db.Model):
             "household_relationship_type": self.household_relationship_type.split(","),
             "household_family_side":       self.household_family_side.split(","),
             "card_type":                   self.card_type.split(","),
-            "card_status":                 self.card_status.split(",")
         }
 
     def __repr__(self):
@@ -441,5 +439,4 @@ class Picklists(db.Model):
                f"\thh_relationship: {self.household_relationship} \n" \
                f"\thh_relationship_type: {self.household_relationship_type} \n" \
                f"\thh_family_side: {self.household_family_side} \n" \
-               f"\tcard_type: {self.card_type} \n" \
-               f"\tcard_status: {self.card_status})"
+               f"\tcard_type: {self.card_type})"
