@@ -73,6 +73,9 @@ db.sqlite3-journal
 instance/
 .webassets-cache
 
+# LLMs
+.claude/sessions/
+
 # Scrapy stuff:
 .scrapy
 

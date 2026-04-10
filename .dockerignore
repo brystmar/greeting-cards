@@ -32,3 +32,6 @@ tmp/
 # Secrets
 .env
 *.env
+
+# LLMs
+.claude/sessions/
