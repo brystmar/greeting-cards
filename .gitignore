@@ -148,3 +148,9 @@ dmypy.json
 /instance
 *.sql
 *.db
+
+# IDE settings (PyCharm)
+.idea/
+
+# macOS
+.DS_Store
