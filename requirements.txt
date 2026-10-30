@@ -35,7 +35,6 @@ tini==4.0.0
 toml==0.10.2
 tomli==2.3.0
 typing_extensions==4.15.0
-uliweb-alembic==0.6.9
 Werkzeug==3.1.4
 wheel==0.45.1
 zipp==3.23.0

@@ -3,7 +3,7 @@ from logging import getLogger
 from datetime import date
 from backend import db
 from models.models import Event
-from flask import request, jsonify
+from flask import request
 from flask_restful import Resource, reqparse
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
@@ -11,8 +11,7 @@ import json
 
 logger = getLogger()
 
-# Initialize a parser for the request parameters
-parser = reqparse.RequestParser(trim=True)
+# Each method builds its own parser so arguments don't accumulate across requests
 
 
 class EventCollectionApi(Resource):
@@ -38,13 +37,13 @@ class EventCollectionApi(Resource):
             error_msg = f"SQLAlchemyError retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of EventCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
         except BaseException as e:
             error_msg = f"BaseException retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of EventCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
         # Compile these data into a list
         try:
@@ -59,7 +58,7 @@ class EventCollectionApi(Resource):
             error_msg = f"Error compiling data into a list of `dict` to return: {e}"
             logger.info(error_msg)
             logger.debug("End of EventCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
 
 class EventApi(Resource):
@@ -75,6 +74,7 @@ class EventApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
+        parser = reqparse.RequestParser(trim=True)
         parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
@@ -89,7 +89,7 @@ class EventApi(Resource):
         except KeyError as e:
             error_msg = f"Error parsing event id: no value was provided. {e}"
             logger.info(error_msg)
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         # Retrieve the selected record
         try:
@@ -107,13 +107,13 @@ class EventApi(Resource):
                 error_msg = f"No records found for event id={event_id}."
                 logger.debug(error_msg)
                 logger.debug("End of EventAPI.GET")
-                return jsonify({"error": error_msg}, status=404)
+                return {"error": error_msg}, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No records found for event id={event_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of EventAPI.GET")
-            return jsonify({"error": error_msg}, status=404)
+            return {"error": error_msg}, 404
 
     @staticmethod
     def post() -> json:
@@ -122,8 +122,9 @@ class EventApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
+        parser = reqparse.RequestParser(trim=True)
         parser.add_argument("name", type=str)
-        parser.add_argument("date", type=str)
+        parser.add_argument("date", type=date.fromisoformat)
         parser.add_argument("year", type=int)
         parser.add_argument("is_archived", type=str)
         parser.add_argument("notes", type=str)
@@ -135,7 +136,8 @@ class EventApi(Resource):
         # Create a new Event record using the provided data
         try:
             logger.debug(f"Attempting to create a Event from the args.")
-            new_event = Event(**args.__str__())
+            new_event = Event(**args)
+            db.session.add(new_event)
             logger.info(f"New record successfully created: {new_event.to_dict()}")
 
             # Commit this new record so the db generates an id
@@ -151,7 +153,7 @@ class EventApi(Resource):
             error_msg = f"Unable to create a new Event record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of EventAPI.POST")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
     @staticmethod
     def put() -> json:
@@ -160,8 +162,11 @@ class EventApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
+        parser = reqparse.RequestParser(trim=True)
+        parser.add_argument("id", type=int, nullable=False, store_missing=False,
+                            required=True)
         parser.add_argument("name", type=str)
-        parser.add_argument("date", type=date)
+        parser.add_argument("date", type=date.fromisoformat)
         parser.add_argument("year", type=int)
         parser.add_argument("is_archived", type=str)
         parser.add_argument("notes", type=str)
@@ -178,7 +183,7 @@ class EventApi(Resource):
             error_msg = f"Must provide a value for event id."
             logger.debug(error_msg)
             logger.info(f"Error parsing event id: no value was provided. {e}")
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         try:
             # Retrieve the specified event record
@@ -201,11 +206,18 @@ class EventApi(Resource):
             logger.debug("End of EventAPI.PUT")
             return event.id, 200
 
+        except NoResultFound as e:
+            # Must be caught before SQLAlchemyError, which NoResultFound inherits from
+            error_msg = f"No record found for event id={event_id}.\n{e}"
+            logger.debug(error_msg)
+            logger.debug("End of EventAPI.PUT")
+            return {"error": error_msg}, 404
+
         except SQLAlchemyError as e:
             error_msg = f"Unable to update Event record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of EventAPI.PUT")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
     @staticmethod
     def delete() -> json:
@@ -214,6 +226,7 @@ class EventApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
+        parser = reqparse.RequestParser(trim=True)
         parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
@@ -229,7 +242,7 @@ class EventApi(Resource):
             error_msg = f"Error parsing event id: no value was provided. {e}"
             logger.info(error_msg)
             logger.debug(f"End of EventAPI.DELETE")
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         try:
             # Retrieve the selected record
@@ -240,7 +253,8 @@ class EventApi(Resource):
             if event_to_delete:
                 # Record successfully returned from the db
                 logger.debug(f"Event record found.  Attempting to delete it.")
-                event_to_delete.delete()
+                deleted_record = event_to_delete.to_dict()
+                db.session.delete(event_to_delete)
 
                 logger.debug("About to commit this delete to the db.")
                 db.session.commit()
@@ -248,16 +262,16 @@ class EventApi(Resource):
                 logger.info("Event record successfully deleted.")
 
                 logger.debug("End of EventAPI.GET")
-                return event_to_delete.to_dict(), 200
+                return deleted_record, 200
             else:
                 # No record with this id exists in the db
                 error_msg = f"No record found for event id={event_id}."
                 logger.debug(error_msg)
                 logger.debug("End of EventAPI.GET")
-                return jsonify({"error": error_msg}, status=404)
+                return {"error": error_msg}, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No record found for event id={event_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of EventAPI.GET")
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 404

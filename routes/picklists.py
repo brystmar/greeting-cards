@@ -1,7 +1,6 @@
 """Provides the default picklist values for the front end to use in forms."""
 
 from logging import getLogger
-from flask import jsonify
 from backend import db
 from models.models import Picklists
 from flask_restful import Resource
@@ -36,4 +35,4 @@ class PicklistValuesApi(Resource):
             error_msg = f"No picklist values found for version={version_id}. {e}"
             logger.info(error_msg)
             logger.debug(f"End of PicklistValuesApi.GET")
-            return jsonify({"error": error_msg}, status=404)
+            return {"error": error_msg}, 404
