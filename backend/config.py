@@ -20,7 +20,10 @@ class Config(object):
     # App-related variables
     APP_NAME = "greeting-cards"
     HOST_ADDRESS = environ.get("HOST_ADDRESS", "localhost")
-    DEBUG_ENABLED = environ.get("DEBUG_ENABLED", "False").lower() == "true"
+    DEBUG_ENABLED = environ.get("DEBUG_ENABLED", "False").strip().lower() == "true"
+    # Flask reads its own DEBUG key (e.g. for the CORS check in create_app), so keep it in sync.
+    # Note: `flask run` (used in the Dockerfile) still takes its debugger setting from FLASK_DEBUG.
+    DEBUG = DEBUG_ENABLED
     BOUND_PORT = int(environ.get("BACKEND_PORT", 5001))
     logger.debug(f"Backend configured for http://{HOST_ADDRESS}:{BOUND_PORT}")
 
@@ -50,5 +53,8 @@ class Config(object):
 
     # Should SQLAlchemy send a notification to the app every time an object changes?
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Test pooled connections before use so the app recovers after a DB restart
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
     logger.debug("End of the Config() class.")

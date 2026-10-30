@@ -3,7 +3,7 @@ from logging import getLogger
 from datetime import date
 from backend import db
 from models.models import Gift
-from flask import request, jsonify
+from flask import request
 from flask_restful import Resource, reqparse
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
@@ -11,8 +11,7 @@ import json
 
 logger = getLogger()
 
-# Initialize a parser for the request parameters
-parser = reqparse.RequestParser(trim=True)
+# Each method builds its own parser so arguments don't accumulate across requests
 
 
 class GiftCollectionApi(Resource):
@@ -38,13 +37,13 @@ class GiftCollectionApi(Resource):
             error_msg = f"SQLAlchemyError retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of GiftCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
         except BaseException as e:
             error_msg = f"BaseException retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of GiftCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
         # Compile these data into a list
         try:
@@ -59,7 +58,7 @@ class GiftCollectionApi(Resource):
             error_msg = f"Error compiling data into a list of `dict` to return: {e}"
             logger.info(error_msg)
             logger.debug("End of GiftCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
 
 class GiftApi(Resource):
@@ -75,6 +74,7 @@ class GiftApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
+        parser = reqparse.RequestParser(trim=True)
         parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
@@ -89,7 +89,7 @@ class GiftApi(Resource):
         except KeyError as e:
             error_msg = f"Error parsing gift id: no value was provided. {e}"
             logger.info(error_msg)
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         # Retrieve the selected record
         try:
@@ -107,13 +107,13 @@ class GiftApi(Resource):
                 error_msg = f"No records found for gift id={gift_id}."
                 logger.debug(error_msg)
                 logger.debug("End of GiftAPI.GET")
-                return jsonify({"error": error_msg}, status=404)
+                return {"error": error_msg}, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No records found for gift id={gift_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of GiftAPI.GET")
-            return jsonify({"error": error_msg}, status=404)
+            return {"error": error_msg}, 404
 
     @staticmethod
     def post() -> json:
@@ -122,12 +122,13 @@ class GiftApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
+        parser = reqparse.RequestParser(trim=True)
         parser.add_argument("event_id", type=int)
         parser.add_argument("household_id", type=int)
         parser.add_argument("description", type=str)
         parser.add_argument("type", type=str)
         parser.add_argument("origin", type=str)
-        parser.add_argument("date", type=date)
+        parser.add_argument("date", type=date.fromisoformat)
         parser.add_argument("should_a_card_be_sent", type=str)
         parser.add_argument("notes", type=str)
 
@@ -138,7 +139,8 @@ class GiftApi(Resource):
         # Create a new Gift record using the provided data
         try:
             logger.debug(f"Attempting to create a Gift from the args.")
-            new_gift = Gift(**args.__str__())
+            new_gift = Gift(**args)
+            db.session.add(new_gift)
             logger.info(f"New record successfully created: {new_gift.to_dict()}")
 
             # Commit this new record so the db generates an id
@@ -154,7 +156,7 @@ class GiftApi(Resource):
             error_msg = f"Unable to create a new Gift record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of GiftAPI.POST")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
     @staticmethod
     def put() -> json:
@@ -163,12 +165,15 @@ class GiftApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
+        parser = reqparse.RequestParser(trim=True)
+        parser.add_argument("id", type=int, nullable=False, store_missing=False,
+                            required=True)
         parser.add_argument("event_id", type=int)
         parser.add_argument("household_id", type=int)
         parser.add_argument("description", type=str)
         parser.add_argument("type", type=str)
         parser.add_argument("origin", type=str)
-        parser.add_argument("date", type=date)
+        parser.add_argument("date", type=date.fromisoformat)
         parser.add_argument("should_a_card_be_sent", type=str)
         parser.add_argument("notes", type=str)
 
@@ -183,7 +188,7 @@ class GiftApi(Resource):
         except KeyError as e:
             error_msg = f"Error parsing gift id: no value was provided. {e}"
             logger.info(error_msg)
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         try:
             # Retrieve the specified gift record
@@ -193,12 +198,12 @@ class GiftApi(Resource):
 
             # Update this record with the provided data
             gift.event_id = args["event_id"]
-            gift.households = args["households"]
+            gift.household_id = args["household_id"]
             gift.description = args["description"]
-            gift.origin = args["type"]
+            gift.type = args["type"]
             gift.origin = args["origin"]
             gift.date = args["date"]
-            gift.date = args["should_a_card_be_sent"]
+            gift.should_a_card_be_sent = args["should_a_card_be_sent"]
             gift.notes = args["notes"]
 
             # Commit these changes to the db
@@ -209,11 +214,18 @@ class GiftApi(Resource):
             logger.debug("End of GiftAPI.PUT")
             return gift.id, 200
 
+        except NoResultFound as e:
+            # Must be caught before SQLAlchemyError, which NoResultFound inherits from
+            error_msg = f"No record found for gift id={gift_id}.\n{e}"
+            logger.debug(error_msg)
+            logger.debug("End of GiftAPI.PUT")
+            return {"error": error_msg}, 404
+
         except SQLAlchemyError as e:
             error_msg = f"Unable to update Gift record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of GiftAPI.PUT")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
     @staticmethod
     def delete() -> json:
@@ -222,6 +234,7 @@ class GiftApi(Resource):
         logger.debug(request)
 
         # Define the parameters used by this endpoint
+        parser = reqparse.RequestParser(trim=True)
         parser.add_argument("id", type=int, nullable=False, store_missing=False,
                             required=True)
 
@@ -237,7 +250,7 @@ class GiftApi(Resource):
             error_msg = f"Error parsing gift id: no value was provided. {e}"
             logger.info(error_msg)
             logger.debug(f"End of GiftAPI.DELETE")
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         try:
             # Retrieve the selected record
@@ -248,7 +261,8 @@ class GiftApi(Resource):
             if gift_to_delete:
                 # Record successfully returned from the db
                 logger.debug(f"Gift record found.  Attempting to delete it.")
-                gift_to_delete.delete()
+                deleted_record = gift_to_delete.to_dict()
+                db.session.delete(gift_to_delete)
 
                 logger.debug("About to commit this delete to the db.")
                 db.session.commit()
@@ -256,16 +270,16 @@ class GiftApi(Resource):
                 logger.info("Gift record successfully deleted.")
 
                 logger.debug("End of GiftAPI.GET")
-                return gift_to_delete.to_dict(), 200
+                return deleted_record, 200
             else:
                 # No record with this id exists in the db
                 error_msg = f"No record found for gift id={gift_id}."
                 logger.debug(error_msg)
                 logger.debug("End of GiftAPI.GET")
-                return jsonify({"error": error_msg}, status=404)
+                return {"error": error_msg}, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No record found for gift id={gift_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of GiftAPI.GET")
-            return jsonify({"error": error_msg}, status=404)
+            return {"error": error_msg}, 404

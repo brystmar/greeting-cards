@@ -3,7 +3,7 @@ from logging import getLogger
 from datetime import datetime, timezone
 from backend import db
 from models.models import Address
-from flask import request, jsonify
+from flask import request
 from flask_restful import Resource, reqparse
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
@@ -18,8 +18,10 @@ base_parser = reqparse.RequestParser(trim=True)
 base_parser.add_argument("id", type=int, nullable=False, required=True)
 
 def add_address_fields_to_parser(provided_parser) -> reqparse:
-    """Adds the remaining address-related fields to a given parser."""
+    """Adds the remaining address-related fields to a copy of the given parser."""
     logger.debug("Adding address fields to the parser")
+    # Copy first so the shared base_parser doesn't accumulate args across requests
+    provided_parser = provided_parser.copy()
     provided_parser.add_argument("line_1", type=str)
     provided_parser.add_argument("line_2", type=str)
     provided_parser.add_argument("city", type=str)
@@ -59,13 +61,13 @@ class AddressCollectionApi(Resource):
             error_msg = f"SQLAlchemyError retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of AddressCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
         except BaseException as e:
             error_msg = f"BaseException retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of AddressCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
         # Compile these data into a list
         try:
@@ -80,7 +82,7 @@ class AddressCollectionApi(Resource):
             error_msg = f"Error compiling data into a list of `dict` to return: {e}"
             logger.info(error_msg)
             logger.debug("End of AddressCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
 
 class AddressApi(Resource):
@@ -117,13 +119,13 @@ class AddressApi(Resource):
                 error_msg = f"No records found for address id={address_id}."
                 logger.info(error_msg)
                 logger.debug("End of AddressAPI.GET")
-                return jsonify({"error": error_msg}, status=404)
+                return {"error": error_msg}, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No records found for address id={address_id}.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.GET")
-            return jsonify({"error": error_msg}, status=404)
+            return {"error": error_msg}, 404
 
     @staticmethod
     def post() -> json:
@@ -133,6 +135,7 @@ class AddressApi(Resource):
 
         # Define the parameters used by this endpoint
         parser = add_address_fields_to_parser(base_parser)
+        parser.add_argument("household_id", type=int)
 
         # Parse the arguments provided
         try:
@@ -143,17 +146,18 @@ class AddressApi(Resource):
             error_msg = f"Unable to parse the address arguments.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of AddressAPI.PUT")
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
         except TypeError as e:
             error_msg = f"Unable to parse the address arguments.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of AddressAPI.PUT")
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         # Create a new Address record using the provided data
         try:
             logger.debug(f"Attempting to create an Address from the args.")
-            new_address = Address(**args.__str__())
+            new_address = Address(**args)
+            db.session.add(new_address)
             logger.info(f"New record successfully created: {new_address.to_dict()}")
 
             # Set metadata for this new record
@@ -173,7 +177,7 @@ class AddressApi(Resource):
             error_msg = f"Unable to create a new Address record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of AddressAPI.POST")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
     @staticmethod
     def put() -> json:
@@ -193,12 +197,12 @@ class AddressApi(Resource):
             error_msg = f"Unable to parse the arguments Address record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of AddressAPI.PUT")
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
         except TypeError as e:
             error_msg = f"Unable to parse the arguments Address record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of AddressAPI.PUT")
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         try:
             # Retrieve the specified address record
@@ -230,11 +234,18 @@ class AddressApi(Resource):
             logger.debug("End of AddressAPI.PUT")
             return address.id, 200
 
+        except NoResultFound as e:
+            # Must be caught before SQLAlchemyError, which NoResultFound inherits from
+            error_msg = f"No record found for address id={args.id}.\n{e}"
+            logger.debug(error_msg)
+            logger.debug("End of AddressAPI.PUT")
+            return {"error": error_msg}, 404
+
         except SQLAlchemyError as e:
             error_msg = f"Unable to update Address record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of AddressAPI.PUT")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
     @staticmethod
     def delete() -> json:
@@ -254,7 +265,7 @@ class AddressApi(Resource):
             error_msg = f"Error parsing `id`: no value was provided. {e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.DELETE")
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         # Retrieve the selected record
         try:
@@ -265,7 +276,8 @@ class AddressApi(Resource):
             if address_to_delete:
                 # Record successfully returned from the db
                 logger.debug(f"Address record found, attempting to delete it.")
-                address_to_delete.delete()
+                deleted_record = address_to_delete.to_dict()
+                db.session.delete(address_to_delete)
 
                 logger.debug("About to commit this DELETE to the db.")
                 db.session.commit()
@@ -273,22 +285,22 @@ class AddressApi(Resource):
                 logger.info("Address record successfully deleted.")
 
                 logger.debug(f"End of AddressAPI.DELETE")
-                return address_to_delete.to_dict(), 200
+                return deleted_record, 200
             else:
                 # No record with this id exists in the db
                 error_msg = f"No record found for address id={address_id}."
                 logger.info(error_msg)
                 logger.debug(f"End of AddressAPI.DELETE")
-                return jsonify({"error": error_msg}, status=404)
+                return {"error": error_msg}, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No record found for address id={address_id}.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.DELETE")
-            return jsonify({"error": error_msg}, status=404)
+            return {"error": error_msg}, 404
 
         except SQLAlchemyError as e:
             error_msg = f"SQLAlchemy error when attempting to delete address id={address_id}.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of AddressAPI.DELETE")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500

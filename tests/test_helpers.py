@@ -103,15 +103,15 @@ def test_scrub_password_basic():
 
 
 def test_scrub_password_replaces_with_placeholder():
-    uri = "postgresql+psycopg://prod:HPpREqN14wk4SSYccpfP@192.168.1.92:15432/cards"
+    uri = "postgresql+psycopg://prod:not-a-real-password@db.example.com:5432/cards"
     result = scrub_password_from_database_uri(uri)
-    assert result == "postgresql+psycopg://prod:DB_PW@192.168.1.92:15432/cards"
+    assert result == "postgresql+psycopg://prod:DB_PW@db.example.com:5432/cards"
 
 
 def test_scrub_password_long_password():
-    uri = "postgresql+psycopg://dev:9wJ44arq9V5IDbAsuWLiZapzoj0EnE2M6ylH@192.168.1.92:15432/cards-dev"
+    uri = "postgresql+psycopg://dev:fake-long-password-0123456789abcdefgh@db.example.com:5432/cards-dev"
     result = scrub_password_from_database_uri(uri)
-    assert "9wJ44arq9V5IDbAsuWLiZapzoj0EnE2M6ylH" not in result
+    assert "fake-long-password-0123456789abcdefgh" not in result
     assert "DB_PW" in result
 
 

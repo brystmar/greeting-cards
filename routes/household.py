@@ -5,7 +5,7 @@ Creates the household-related endpoints.
 from logging import getLogger
 from backend import db
 from models.models import Household, Address
-from flask import request, jsonify
+from flask import request
 from flask_restful import Resource, reqparse
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, NoResultFound
@@ -25,6 +25,8 @@ base_parser.add_argument("id", type=int, nullable=False, store_missing=False,
 def add_household_fields_to_parser(provided_parser) -> reqparse:
     """Adds the remaining household fields to a given parser."""
     logger.debug("Adding household fields to the parser")
+    # Copy first so the shared base_parser doesn't accumulate args across requests
+    provided_parser = provided_parser.copy()
     provided_parser.add_argument("nickname", type=str)
     provided_parser.add_argument("first_names", type=str)
     provided_parser.add_argument("surname", type=str)
@@ -66,13 +68,13 @@ class HouseholdCollectionApi(Resource):
             error_msg = f"SQLAlchemyError retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of HouseholdCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
         except BaseException as e:
             error_msg = f"BaseException retrieving data: {e}"
             logger.info(error_msg)
             logger.debug("End of HouseholdCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
         # Compile these data into a list
         try:
@@ -87,7 +89,7 @@ class HouseholdCollectionApi(Resource):
             error_msg = f"Error compiling data into a list of `dict` to return: {e}"
             logger.info(error_msg)
             logger.debug("End of HouseholdCollectionAPI.GET")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
 
 class HouseholdApi(Resource):
@@ -118,7 +120,7 @@ class HouseholdApi(Resource):
         except KeyError as e:
             logger.info(f"Error parsing household id: no value was provided. {e}")
             error_msg = "Must provide a household id."
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         # Retrieve the selected record
         try:
@@ -137,13 +139,13 @@ class HouseholdApi(Resource):
                 error_msg = f"No household found with id={household_id}."
                 logger.info(error_msg)
                 logger.debug("End of HouseholdAPI.GET")
-                return jsonify({"error": error_msg}, status=404)
+                return {"error": error_msg}, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No household found with id={household_id}.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of HouseholdAPI.GET")
-            return jsonify({"error": error_msg}, status=404)
+            return {"error": error_msg}, 404
 
     @staticmethod
     def post() -> json:
@@ -227,13 +229,13 @@ class HouseholdApi(Resource):
             error_msg = f"Unable to create new record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of HouseholdAPI.POST")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
         except BaseException as e:
             error_msg = f"Unable to create new record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of HouseholdAPI.POST")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
     @staticmethod
     def put() -> json:
@@ -272,7 +274,7 @@ class HouseholdApi(Resource):
         except KeyError as e:
             logger.info(f"Error parsing household_id: no value was provided. {e}")
             error_msg = "Must provide a value for household_id."
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         try:
             # Retrieve the specified household record
@@ -297,11 +299,18 @@ class HouseholdApi(Resource):
             household.notes = args["notes"]
             household.last_modified = datetime.now(timezone.utc)
 
+        except NoResultFound as e:
+            # Must be caught before SQLAlchemyError, which NoResultFound inherits from
+            error_msg = f"No record found for household id={household_id}.\n{e}"
+            logger.debug(error_msg)
+            logger.debug("End of HouseholdAPI.PUT")
+            return {"error": error_msg}, 404
+
         except SQLAlchemyError as e:
             error_msg = f"Unable to update the Household record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of HouseholdAPI.PUT")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
         try:
             # Commit these changes to the db
@@ -316,7 +325,7 @@ class HouseholdApi(Resource):
             error_msg = f"Unable to update Household record.\n{e}"
             logger.debug(error_msg)
             logger.debug("End of HouseholdAPI.PUT")
-            return jsonify({"error": error_msg}, status=500)
+            return {"error": error_msg}, 500
 
     @staticmethod
     def delete() -> json:
@@ -341,7 +350,7 @@ class HouseholdApi(Resource):
             error_msg = f"Missing household id.\n{e}"
             logger.info(error_msg)
             logger.debug(f"End of HouseholdAPI.DELETE")
-            return jsonify({"error": error_msg}, status=400)
+            return {"error": error_msg}, 400
 
         try:
             # Retrieve the selected record
@@ -366,10 +375,10 @@ class HouseholdApi(Resource):
                 error_msg = f"No household found with id={household_id}."
                 logger.debug(error_msg)
                 logger.debug("End of HouseholdAPI.GET")
-                return jsonify({"error": error_msg}, status=404)
+                return {"error": error_msg}, 404
 
         except (InvalidRequestError, NoResultFound, AttributeError) as e:
             error_msg = f"No household found with id={household_id}.\n{e}"
             logger.debug(error_msg)
             logger.debug(f"End of HouseholdAPI.GET")
-            return jsonify({"error": error_msg}, status=404)
+            return {"error": error_msg}, 404
